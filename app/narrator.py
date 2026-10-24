@@ -15,6 +15,14 @@ log = logging.getLogger("bbw.narrator")
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 MAX_LINE = 280
+DEFAULT_MODELS = "gemini-3-flash-preview,gemini-3.8-flash"
+
+
+def _describe(exc: Exception) -> str:
+    """Short, key-free description of a failure for the logs."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        return f"HTTP {exc.response.status_code}"
+    return type(exc).__name__
 
 SYSTEM_PROMPT = """You are the Big Bad Wolf, now working as a (satirical) building inspector for apartments near UT Austin.
 Write short, dramatic, pun-friendly lines in character. Playful, never cruel.
@@ -173,35 +181,40 @@ def validate(raw: Any, context: dict) -> dict | None:
 
 
 class Narrator:
-    def __init__(self, api_key: str = "", model: str = "gemini-2.5-flash", http: httpx.Client | None = None):
+    def __init__(self, api_key: str = "", model: str = DEFAULT_MODELS, http: httpx.Client | None = None):
         self.api_key = api_key
-        self.model = model
+        # Comma-separated list: the retry moves on to the next model (handy when one is overloaded).
+        self.models = [m.strip() for m in model.split(",") if m.strip()] or [DEFAULT_MODELS.split(",")[0]]
         self.http = http or httpx.Client(timeout=20)
 
     def narrate(self, context: dict) -> dict:
         if not self.api_key or context.get("verdict") == "not_enough_data":
             return canned(context)
         for attempt in range(2):
+            model = self.models[attempt % len(self.models)]
             try:
-                raw = self._call(context)
+                raw = self._call(context, model)
             except Exception as exc:  # network, HTTP, or JSON trouble: retry once, then canned
-                log.warning("Narrator attempt %d failed: %s", attempt + 1, type(exc).__name__)
+                log.warning("Narrator attempt %d (%s) failed: %s", attempt + 1, model, _describe(exc))
                 continue
             result = validate(raw, context)
             if result:
                 result["source"] = "gemini"
                 return result
-            log.warning("Narrator attempt %d returned invalid JSON shape", attempt + 1)
+            log.warning("Narrator attempt %d (%s) returned invalid JSON shape", attempt + 1, model)
         return canned(context)
 
-    def _call(self, context: dict) -> Any:
+    def _call(self, context: dict, model: str) -> Any:
+        config: dict[str, Any] = {"responseMimeType": "application/json", "temperature": 0.9}
+        if model.startswith("gemini-3"):
+            config["thinkingConfig"] = {"thinkingLevel": "low"}  # short lines don't need deep thought; much faster
         body = {
             "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
             "contents": [{"role": "user", "parts": [{"text": json.dumps(context)}]}],
-            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.9},
+            "generationConfig": config,
         }
         resp = self.http.post(
-            GEMINI_URL.format(model=self.model),
+            GEMINI_URL.format(model=model),
             headers={"x-goog-api-key": self.api_key},
             json=body,
         )

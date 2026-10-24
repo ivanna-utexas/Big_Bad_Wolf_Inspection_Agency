@@ -24,8 +24,8 @@ RESTRICT = {
         "place_results.{title,data_id,place_id,rating,reviews,address,type,gps_coordinates,thumbnail},error"
     ),
     "google_maps_reviews": (
-        "place_info,topics,reviews.{review_id,snippet,extracted_snippet,rating,iso_date,likes,response,details},"
-        "serpapi_pagination,error"
+        # Keep `reviews` whole: sub-selecting its fields made SerpApi drop the list entirely.
+        "place_info,topics,reviews,serpapi_pagination,error"
     ),
 }
 

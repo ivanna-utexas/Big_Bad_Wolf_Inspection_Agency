@@ -11,7 +11,7 @@ Type the name of an apartment complex near UT Austin. The Big Bad Wolf, now a li
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-cp .env.example .env          # then add SERPAPI_API_KEY (and GEMINI_API_KEY if you have one)
+cp .env          # then add SERPAPI_API_KEY (and GEMINI_API_KEY if you have one)
 .venv/bin/uvicorn app.main:app --reload --port 8000
 # open http://localhost:8000
 ```
@@ -34,7 +34,7 @@ Run the tests:
 |---|---|---|
 | `SERPAPI_API_KEY` | yes | SerpApi key. Read only by the backend; never sent to the browser or written to logs. |
 | `GEMINI_API_KEY` | no | Gemini key for the wolf's lines. Without it, the wolf uses canned lines. |
-| `GEMINI_MODEL` | no | Defaults to `gemini-2.5-flash`. |
+| `GEMINI_MODEL` | no | Comma-separated models; the retry moves to the next one. Defaults to `gemini-3-flash-preview,gemini-3.8-flash` (`gemini-2.5-flash` is closed to new keys). |
 | `BBW_CACHE_PATH` | no | SQLite cache file. Defaults to `cache.sqlite3` in the repo root. |
 | `BBW_AUTOCOMPLETE` | no | `0` turns off search-box suggestions (each suggestion lookup is a SerpApi search). |
 | `BBW_JSON_RESTRICTOR` | no | `0` asks SerpApi for full payloads instead of trimmed ones. |
@@ -115,7 +115,7 @@ All constants are at the top of `app/scorer.py`. The "Why this verdict?" drawer 
 ## Decisions on the OPEN items
 
 - **Backend:** Python + FastAPI, with a plain HTML/CSS/JS frontend served by the same app. No build step.
-- **LLM:** Google Gemini (`gemini-2.5-flash` by default, set by `GEMINI_MODEL`) through its REST API with JSON output mode. This also fits the MLH Gemini track. Canned lines take over if there's no key, an error, or invalid JSON after one retry. Good narrations are cached.
+- **LLM:** Google Gemini (`gemini-3-flash-preview`, falling back to `gemini-3.8-flash`; set by `GEMINI_MODEL`) through its REST API with JSON output mode. This also fits the MLH Gemini track. Canned lines take over if there's no key, an error, or invalid JSON after one retry. Good narrations are cached.
 - **Hosting:** run locally for the demo. A `Dockerfile` is included for a Vultr (or any) VM: `docker build -t bbw . && docker run -p 80:8000 --env-file .env -v $PWD/cache:/app/cache bbw`. Point the .TECH domain at the VM. Copy your warmed `cache.sqlite3` into the mounted `cache/` folder so the hosted demo is warm too.
 - **Signal weights:** starting values are in `data/signals.json` and `app/scorer.py`, set against synthetic fixtures. **They still need tuning against 5–10 real buildings.** Run `scripts/prewarm.py`, open the "why" drawer for each one, and adjust until the verdicts feel fair and funny. The main levers are `SIGNAL_SCALE`, `STAR_SCALE`, and the individual weights.
 - **Snippet IDs** are short hashes of SerpApi's `review_id`, so no Google identifiers reach the browser.

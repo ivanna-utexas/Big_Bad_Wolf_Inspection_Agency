@@ -21,7 +21,7 @@ def _flag(name: str, default: bool) -> bool:
 
 SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview,gemini-3.8-flash")
 CACHE_PATH = Path(os.getenv("BBW_CACHE_PATH", str(ROOT / "cache.sqlite3")))
 AUTOCOMPLETE_ENABLED = _flag("BBW_AUTOCOMPLETE", True)
 JSON_RESTRICTOR_ENABLED = _flag("BBW_JSON_RESTRICTOR", True)
