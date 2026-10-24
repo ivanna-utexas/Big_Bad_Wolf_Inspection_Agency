@@ -477,9 +477,11 @@
   function fillMeter(risk) {
     const fill = $("#meter-fill");
     fill.style.transition = "";
-    fill.style.width = risk + "%";
-    // Stretch the gradient over the full track so 100 reaches the red (straw) end on the left.
-    fill.style.backgroundSize = risk > 0 ? `${10000 / risk}% 100%` : "100% 100%";
+    // The bar grows from straw (left) toward brick (right): sturdier buildings fill further.
+    const sturdy = 100 - risk;
+    fill.style.width = sturdy + "%";
+    // Stretch the gradient over the full track so the bar's tip shows the color of its zone.
+    fill.style.backgroundSize = sturdy > 0 ? `${10000 / sturdy}% 100%` : "100% 100%";
     const start = performance.now();
     const duration = 1600;
     const step = (now) => {
