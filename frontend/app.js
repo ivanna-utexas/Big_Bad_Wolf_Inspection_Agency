@@ -235,6 +235,12 @@
     thumb.hidden = !d.place.thumbnail;
     if (d.place.thumbnail) { thumb.src = d.place.thumbnail; thumb.referrerPolicy = "no-referrer"; }
 
+    for (const id of ["#r-google", "#r-google-2"]) {
+      const link = $(id);
+      link.hidden = !d.place.google_url;
+      if (d.place.google_url) link.href = d.place.google_url;
+    }
+
     $("#r-opening").textContent = `"${d.narration.wolf_opening}"`;
     $("#r-verdict-line").textContent = d.narration.verdict_line;
     $("#r-closing").textContent = `"${d.narration.closing_threat}"`;
@@ -261,7 +267,7 @@
         el("article", { class: "theme-card" },
           el("header", {},
             el("h4", { text: t.theme }),
-            el("span", { class: "tone " + t.tone, text: t.tone === "good" ? "Sturdy" : "Drafty" })
+            el("span", { class: "tone " + t.tone, text: t.tone === "good" ? "Strong" : "Weak" })
           ),
           t.wolf_comment ? el("p", { class: "wolf-comment", text: `🐺 ${t.wolf_comment}` }) : null,
           ...t.snippets.map((s) =>
@@ -319,7 +325,8 @@
     const houses = document.querySelectorAll(".house");
     const stamp = $("#r-stamp");
     scene.classList.remove("has-target", "inhaling-scene", "blowing");
-    houses.forEach((h) => h.classList.remove("target", "shake", "fall", "wobble", "stand"));
+    houses.forEach((h) => h.classList.remove("target", "shake", "stand"));
+    resetCrumble();
     stamp.className = "stamp";
     stamp.textContent = VERDICT_WORD[verdict] || "";
     $("#meter-fill").style.transition = "none";
@@ -340,10 +347,131 @@
     later(2500, () => {
       if (target) {
         target.classList.remove("shake");
-        target.classList.add(verdict === "straw" ? "fall" : verdict === "sticks" ? "wobble" : "stand");
+        if (verdict === "brick") target.classList.add("stand");
+        else crumble(target, verdict === "straw");
       }
       stamp.classList.add("show", verdict);
     });
+  }
+
+  // ---------- crumbling houses ----------
+
+  const GROUND = 248; // y of the grass line in the scene
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+
+  function resetCrumble() {
+    document.querySelectorAll("#scene [data-piece]").forEach((piece) => piece.getAnimations().forEach((a) => a.cancel()));
+    $("#debris").replaceChildren();
+  }
+
+  // straw: the whole house collapses into a pile. sticks: walls buckle and the roof slides off.
+  function crumble(house, total) {
+    const speed = reducedMotion() ? 0.01 : 1;
+    const shiftX = house.transform.baseVal.numberOfItems ? house.transform.baseVal.getItem(0).matrix.e : 0;
+    const pieces = [...house.querySelectorAll("[data-piece]")];
+    const wall = pieces.find((p) => p.dataset.piece === "wall").getBBox();
+    const pileHeight = total ? 16 : wall.height * 0.7;
+
+    // One set of random values per kind, so a roof and its trim move together.
+    const plan = {
+      wall: total
+        ? { skew: rand(-25, 25), dx: rand(-8, 8), delay: 0 }
+        : { skew: rand(-14, -8), dx: -4, delay: 0 },
+      roof: total
+        ? { rot: rand(-22, 22), dx: rand(-20, 20), delay: 140 }
+        : { rot: rand(-26, -18), dx: rand(-38, -28), delay: 260 },
+      door: { rot: Math.random() < 0.5 ? -88 : 88, delay: 80 },
+    };
+
+    for (const piece of pieces) {
+      const box = piece.getBBox();
+      const kind = piece.dataset.piece;
+      const p = plan[kind];
+      piece.style.transformBox = "fill-box";
+      piece.style.transformOrigin = kind === "wall" && !total ? "0% 100%" : "50% 100%";
+      let end;
+      if (kind === "wall") {
+        const squash = Math.min(1, pileHeight / wall.height);
+        end = `translate(${p.dx}px, 0px) skewX(${p.skew}deg) scaleY(${squash})`;
+      } else if (kind === "roof") {
+        const landY = total ? GROUND - pileHeight * 0.4 : GROUND;
+        const dy = landY - (box.y + box.height);
+        end = `translate(${p.dx}px, ${dy}px) rotate(${p.rot}deg) scaleY(${total ? 0.55 : 0.85})`;
+      } else if (!total) {
+        continue; // doors and windows ride along with the leaning walls... mostly
+      } else {
+        end = `translate(${rand(-10, 10)}px, ${GROUND - (box.y + box.height)}px) rotate(${p.rot}deg)`;
+      }
+      piece.animate(
+        [
+          { transform: "none" },
+          { transform: `translate(0px, -4px) rotate(${(p.rot || p.skew || 0) * 0.15}deg)`, offset: 0.2 },
+          { transform: end },
+        ],
+        { duration: 1100 * speed, delay: p.delay * speed, easing: "cubic-bezier(.45,0,.75,1)", fill: "forwards" }
+      );
+    }
+    if (!total && pieces.some((p) => p.dataset.piece === "door")) {
+      // When sticks buckle, the door leans with the walls.
+      pieces.filter((p) => p.dataset.piece === "door").forEach((door) => {
+        door.style.transformBox = "view-box";
+        const box = wall;
+        door.style.transformOrigin = `${box.x}px ${box.y + box.height}px`;
+        door.animate([{ transform: "none" }, { transform: `skewX(${plan.wall.skew}deg) scaleY(${pileHeight / wall.height})` }],
+          { duration: 1100 * speed, easing: "cubic-bezier(.45,0,.75,1)", fill: "forwards" });
+      });
+    }
+    scatterDebris(house.dataset.kind, wall, shiftX, total ? 22 : 10, speed);
+    puffDust(wall, shiftX, total ? 6 : 3, speed);
+  }
+
+  // Bits of straw or sticks blown left by the wolf, landing on the grass.
+  function scatterDebris(kind, wall, shiftX, count, speed) {
+    const layer = $("#debris");
+    const color = kind === "straw" ? "var(--straw-dark)" : "var(--sticks-dark)";
+    for (let i = 0; i < count; i++) {
+      const bit = document.createElementNS(SVG_NS, "path");
+      const len = kind === "straw" ? rand(8, 14) : rand(10, 18);
+      bit.setAttribute("d", `M${-len / 2} 0 L${len / 2} 0`);
+      bit.setAttribute("stroke", color);
+      bit.setAttribute("stroke-width", kind === "straw" ? 2.5 : 4);
+      bit.setAttribute("stroke-linecap", "round");
+      layer.append(bit);
+      const x0 = shiftX + rand(wall.x, wall.x + wall.width);
+      const y0 = rand(wall.y - 40, wall.y + wall.height * 0.6);
+      const x1 = x0 + rand(-120, 20);
+      const y1 = GROUND - rand(0, 5);
+      const spin = rand(-540, 540);
+      bit.animate(
+        [
+          { transform: `translate(${x0}px, ${y0}px) rotate(0deg)`, opacity: 0 },
+          { transform: `translate(${(x0 + x1) / 2}px, ${y0 - rand(15, 45)}px) rotate(${spin / 2}deg)`, opacity: 1, offset: 0.4 },
+          { transform: `translate(${x1}px, ${y1}px) rotate(${spin}deg)`, opacity: 1 },
+        ],
+        { duration: rand(900, 1500) * speed, delay: rand(0, 300) * speed, easing: "ease-in", fill: "both" }
+      );
+    }
+  }
+
+  function puffDust(wall, shiftX, count, speed) {
+    const layer = $("#debris");
+    for (let i = 0; i < count; i++) {
+      const cloud = document.createElementNS(SVG_NS, "circle");
+      cloud.setAttribute("r", "14");
+      cloud.setAttribute("fill", "var(--dust)");
+      layer.append(cloud);
+      const x = shiftX + wall.x + (wall.width * (i + 0.5)) / count;
+      cloud.animate(
+        [
+          { transform: `translate(${x}px, ${GROUND - 4}px) scale(0.2)`, opacity: 0 },
+          { transform: `translate(${x + rand(-10, 4)}px, ${GROUND - 14}px) scale(1.2)`, opacity: 0.85, offset: 0.35 },
+          { transform: `translate(${x + rand(-30, -8)}px, ${GROUND - 26}px) scale(1.9)`, opacity: 0 },
+        ],
+        { duration: 1400 * speed, delay: (500 + i * 60) * speed, easing: "ease-out", fill: "both" }
+      );
+    }
   }
 
   function fillMeter(risk) {
@@ -478,7 +606,6 @@
   $("#q").addEventListener("input", onType);
   $("#q").addEventListener("keydown", onKey);
   $("#q").addEventListener("blur", () => setTimeout(hideSuggestions, 150));
-  $("#btn-replay").addEventListener("click", () => current && playScene(current.verdict, current.huff_risk));
   $("#btn-share").addEventListener("click", share);
   $("#btn-compare").addEventListener("click", addToTray);
   $("#tray-go").addEventListener("click", () => runCompare(tray().map((x) => x.data_id)));

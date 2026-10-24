@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import re
+from urllib.parse import urlencode
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
 from typing import Callable
@@ -35,6 +36,14 @@ def _num(value, cast=float):
         return None
 
 
+def google_maps_url(title: str, address: str, place_id: str = "") -> str:
+    """Link to the place on Google Maps, where its reviews live."""
+    params = {"api": "1", "query": " ".join(x for x in (title, address) if x)}
+    if place_id:
+        params["query_place_id"] = place_id  # pins the exact place instead of a text search
+    return "https://www.google.com/maps/search/?" + urlencode(params)
+
+
 def _candidate(item: dict) -> dict | None:
     if not item.get("data_id"):
         return None
@@ -42,6 +51,7 @@ def _candidate(item: dict) -> dict | None:
         "title": item.get("title") or "Unnamed building",
         "address": item.get("address") or "",
         "data_id": item["data_id"],
+        "place_id": item.get("place_id") or "",
         "rating": _num(item.get("rating")),
         "reviews": _num(item.get("reviews"), int),
         "thumbnail": item.get("thumbnail") or "",
@@ -157,6 +167,7 @@ class Inspector:
             "reviews": _num(info.get("reviews"), int) if info.get("reviews") is not None else known.get("reviews"),
             "thumbnail": known.get("thumbnail") or "",
         }
+        place["google_url"] = google_maps_url(place["title"], place["address"], known.get("place_id") or "")
 
         scored = scorer.score(
             reviews,

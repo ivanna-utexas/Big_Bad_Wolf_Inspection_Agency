@@ -74,6 +74,7 @@
           <div>
             <h2 id="r-title"></h2>
             <p id="r-address" class="sub"></p>
+            <a id="r-google" class="google-link" target="_blank" rel="noopener noreferrer">Read the reviews on Google Maps ↗</a>
           </div>
         </div>
 
@@ -90,44 +91,46 @@
             </defs>
             <path class="hill" d="M0 250 Q160 228 320 244 T700 238 V280 H0Z"/>
 
-            <!-- straw -->
-            <g class="house" id="house-straw" data-kind="straw">
+            <!-- straw (shifted right, next to the wolf) -->
+            <g class="house" id="house-straw" data-kind="straw" transform="translate(356 0)">
               <g class="house-body">
-                <rect x="40" y="168" width="110" height="80" fill="var(--straw)" stroke="var(--ink)" stroke-width="3"/>
-                <path d="M50 178v62M64 176v66M78 178v64M92 176v66M106 178v62M120 176v66M134 178v64" stroke="var(--straw-dark)" stroke-width="2"/>
-                <path d="M28 172 L95 110 L162 172 Z" fill="var(--straw-dark)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
-                <path d="M60 160 l10 -18 M80 150 l8 -22 M100 150 l-6 -26 M120 160 l-10 -20" stroke="var(--straw)" stroke-width="2.5"/>
-                <rect x="80" y="206" width="30" height="42" rx="15" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
+                <rect data-piece="wall" x="40" y="168" width="110" height="80" fill="var(--straw)" stroke="var(--ink)" stroke-width="3"/>
+                <path data-piece="wall" d="M50 178v62M64 176v66M78 178v64M92 176v66M106 178v62M120 176v66M134 178v64" stroke="var(--straw-dark)" stroke-width="2"/>
+                <path data-piece="roof" d="M28 172 L95 110 L162 172 Z" fill="var(--straw-dark)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+                <path data-piece="roof" d="M60 160 l10 -18 M80 150 l8 -22 M100 150 l-6 -26 M120 160 l-10 -20" stroke="var(--straw)" stroke-width="2.5"/>
+                <rect data-piece="door" x="80" y="206" width="30" height="42" rx="15" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
               </g>
             </g>
 
             <!-- sticks -->
             <g class="house" id="house-sticks" data-kind="sticks">
               <g class="house-body">
-                <rect x="210" y="160" width="120" height="88" fill="var(--sticks)" stroke="var(--ink)" stroke-width="3"/>
-                <path d="M222 160v88M238 160v88M254 160v88M286 160v88M302 160v88M318 160v88" stroke="var(--sticks-dark)" stroke-width="4" stroke-linecap="round"/>
-                <path d="M212 190 L328 186 M212 222 L328 226" stroke="var(--sticks-dark)" stroke-width="3"/>
-                <path d="M196 164 L270 104 L344 164 Z" fill="var(--sticks-dark)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
-                <path d="M220 156 L270 114 L320 156" fill="none" stroke="var(--sticks)" stroke-width="3"/>
-                <rect x="256" y="204" width="30" height="44" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
+                <rect data-piece="wall" x="210" y="160" width="120" height="88" fill="var(--sticks)" stroke="var(--ink)" stroke-width="3"/>
+                <path data-piece="wall" d="M222 160v88M238 160v88M254 160v88M286 160v88M302 160v88M318 160v88" stroke="var(--sticks-dark)" stroke-width="4" stroke-linecap="round"/>
+                <path data-piece="wall" d="M212 190 L328 186 M212 222 L328 226" stroke="var(--sticks-dark)" stroke-width="3"/>
+                <path data-piece="roof" d="M196 164 L270 104 L344 164 Z" fill="var(--sticks-dark)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+                <path data-piece="roof" d="M220 156 L270 114 L320 156" fill="none" stroke="var(--sticks)" stroke-width="3"/>
+                <rect data-piece="door" x="256" y="204" width="30" height="44" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
               </g>
             </g>
 
-            <!-- brick -->
-            <g class="house" id="house-brick" data-kind="brick">
+            <!-- brick (shifted left) -->
+            <g class="house" id="house-brick" data-kind="brick" transform="translate(-356 0)">
               <g class="house-body">
-                <rect x="386" y="150" width="130" height="98" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
-                <rect x="478" y="96" width="20" height="40" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
-                <path d="M372 154 L451 92 L530 154 Z" fill="var(--roof)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
-                <rect x="400" y="172" width="28" height="26" fill="var(--window)" stroke="var(--ink)" stroke-width="3"/>
-                <rect x="437" y="200" width="30" height="48" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
+                <rect data-piece="wall" x="386" y="150" width="130" height="98" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
+                <rect data-piece="roof" x="478" y="96" width="20" height="40" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
+                <path data-piece="roof" d="M372 154 L451 92 L530 154 Z" fill="var(--roof)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+                <rect data-piece="door" x="400" y="172" width="28" height="26" fill="var(--window)" stroke="var(--ink)" stroke-width="3"/>
+                <rect data-piece="door" x="437" y="200" width="30" height="48" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
               </g>
             </g>
+
+            <g id="debris" aria-hidden="true"></g>
 
             <!-- pigs sit in front of each house so they stay put when a house falls -->
-            <g class="pig" transform="translate(140 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(166 236)"><use href="#pig-shape"/></g>
             <g class="pig" transform="translate(320 236)"><use href="#pig-shape"/></g>
-            <g class="pig" transform="translate(510 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(500 236)"><use href="#pig-shape"/></g>
             <defs>
               <g id="pig-shape">
                 <ellipse cx="0" cy="0" rx="15" ry="13" fill="var(--pig)" stroke="var(--ink)" stroke-width="2.5"/>
@@ -164,13 +167,13 @@
         <p id="r-sample" class="sample"></p>
 
         <div class="actions">
-          <button id="btn-replay" class="btn" type="button">🌬️ Huff again</button>
           <button id="btn-share" class="btn" type="button">🔗 Share</button>
           <button id="btn-compare" class="btn" type="button">🐷 Add to Pick Your Pig</button>
         </div>
 
         <h3 class="section-title">What reviewers say</h3>
         <div id="r-themes" class="themes"></div>
+        <p class="google-more"><a id="r-google-2" class="google-link" target="_blank" rel="noopener noreferrer">See every review on Google Maps ↗</a></p>
 
         <details class="why">
           <summary>Why this verdict? (the wolf shows his math)</summary>

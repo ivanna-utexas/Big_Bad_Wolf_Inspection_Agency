@@ -32,7 +32,7 @@ def fake_serpapi(calls: list):
             if p["q"].startswith("nothing"):
                 return httpx.Response(200, json={"error": "Google hasn't returned any results for this query."})
             return httpx.Response(200, json={"local_results": [
-                {"title": "Good Place", "data_id": GOOD_ID, "rating": 4.6, "reviews": 120, "address": "1 Rio St", "thumbnail": "t.jpg"},
+                {"title": "Good Place", "data_id": GOOD_ID, "place_id": "ChIJgood", "rating": 4.6, "reviews": 120, "address": "1 Rio St", "thumbnail": "t.jpg"},
                 {"title": "Bad Place", "data_id": BAD_ID, "rating": 2.1, "reviews": 300, "address": "2 Rio St"},
                 {"title": "No id"},
                 {"title": "Tiny Place", "data_id": TINY_ID, "rating": 5, "reviews": 3},
@@ -220,3 +220,11 @@ def test_api_key_never_logged(setup, caplog):
         api.get("/api/search", params={"q": "castilian"})
         api.get("/api/inspect", params={"data_id": BAD_ID})
     assert "secret-key" not in caplog.text
+
+
+def test_inspect_links_to_google_maps(setup):
+    api, _ = setup
+    api.get("/api/search", params={"q": "castilian"})
+    url = api.get("/api/inspect", params={"data_id": GOOD_ID}).json()["place"]["google_url"]
+    assert url.startswith("https://www.google.com/maps/search/?api=1&query=")
+    assert "query_place_id=ChIJgood" in url
