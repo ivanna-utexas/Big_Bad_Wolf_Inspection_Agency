@@ -75,7 +75,7 @@ def create_app(inspector: Inspector | None = None) -> FastAPI:
         return run(app.state.inspector.inspect, data_id)
 
     @app.get("/api/compare")
-    def compare(ids: str = Query("", max_length=400)):
+    def compare(ids: str = Query("", max_length=1000)):
         return run(app.state.inspector.compare, ids.split(","))
 
     @app.get("/api/health")

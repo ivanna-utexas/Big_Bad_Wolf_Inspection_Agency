@@ -228,3 +228,10 @@ def test_inspect_links_to_google_maps(setup):
     url = api.get("/api/inspect", params={"data_id": GOOD_ID}).json()["place"]["google_url"]
     assert url.startswith("https://www.google.com/maps/search/?api=1&query=")
     assert "query_place_id=ChIJgood" in url
+
+
+def test_compare_limits(setup):
+    api, _ = setup
+    assert api.get("/api/compare", params={"ids": GOOD_ID}).status_code == 400
+    too_many = ",".join(f"0x1:0x{i}" for i in range(11))
+    assert api.get("/api/compare", params={"ids": too_many}).status_code == 400

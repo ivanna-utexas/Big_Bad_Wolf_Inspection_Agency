@@ -12,6 +12,35 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <!-- Heart-on-house icon, reused by the toggle button and the panel header -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="heart-house" viewBox="0 0 48 48">
+      <path d="M11 20 V41 H37 V20" fill="var(--card)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M5 23 L24 7 L43 23" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M24 37 C 15.5 31, 14.5 26.5, 17 23.8 C 19.6 21, 23 22.4, 24 25.2 C 25 22.4, 28.4 21, 31 23.8 C 33.5 26.5, 32.5 31, 24 37 Z" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <button id="list-toggle" class="list-toggle" type="button" aria-expanded="false" aria-controls="my-list" aria-label="Open My List">
+    <svg aria-hidden="true"><use href="#heart-house"/></svg>
+    <span id="list-count" class="list-count" hidden>0</span>
+  </button>
+
+  <aside id="my-list" class="my-list" hidden aria-labelledby="my-list-title">
+    <header class="my-list-head">
+      <svg class="my-list-icon" aria-hidden="true"><use href="#heart-house"/></svg>
+      <h2 id="my-list-title">My List</h2>
+      <button id="list-close" class="icon-btn" type="button" aria-label="Close My List">×</button>
+    </header>
+    <div id="list-empty" class="list-empty">
+      <p><strong>Add a sturdy home to your list!</strong></p>
+      <p>Inspect a building, then tap “♡ Add to list” to keep it here.</p>
+    </div>
+    <ul id="list-items" class="list-items"></ul>
+    <button id="list-compare" class="btn btn-primary list-compare" type="button">Compare locations</button>
+    <p id="list-hint" class="list-hint"></p>
+  </aside>
+
   <div class="page">
     <header class="masthead">
       <p class="badge-line">Est. once upon a time · Licensed to huff</p>
@@ -28,13 +57,6 @@
       </div>
       <ul id="suggestions" class="suggestions" role="listbox" hidden></ul>
     </form>
-
-    <!-- Compare tray -->
-    <section id="tray" class="tray" hidden aria-label="Pick Your Pig">
-      <span class="tray-label">Pick Your Pig:</span>
-      <div id="tray-chips" class="tray-chips"></div>
-      <button id="tray-go" class="btn btn-small" type="button">Huff them all</button>
-    </section>
 
     <main id="view" aria-live="polite">
       <!-- Home -->
@@ -168,7 +190,7 @@
 
         <div class="actions">
           <button id="btn-share" class="btn" type="button">🔗 Share</button>
-          <button id="btn-compare" class="btn" type="button">🐷 Add to Pick Your Pig</button>
+          <button id="btn-list" class="btn" type="button" aria-pressed="false">♡ Add to list</button>
         </div>
 
         <h3 class="section-title">What reviewers say</h3>
@@ -185,8 +207,8 @@
 
       <!-- Compare -->
       <section id="compare" class="panel" hidden>
-        <h2>Pick Your Pig</h2>
-        <p class="sub">The wolf huffs at every building. Only one pig stays dry.</p>
+        <h2>Compare Locations</h2>
+        <p class="sub">The wolf huffs at every home on your list. Only one pig stays dry.</p>
         <div id="compare-list" class="compare-list"></div>
         <button id="compare-back" class="btn" type="button">Back</button>
       </section>

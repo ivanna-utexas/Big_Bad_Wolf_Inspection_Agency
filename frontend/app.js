@@ -14,7 +14,7 @@
   ];
   const HOUSE_ICON = { brick: "🧱", sticks: "🪵", straw: "🌾", not_enough_data: "🤷" };
   const VERDICT_WORD = { brick: "Brick", sticks: "Sticks", straw: "Straw" };
-  const TRAY_KEY = "bbw-pick-your-pig";
+  const LIST_KEY = "bbw-my-list";
 
   let current = null; // last inspect payload
   let timers = [];
@@ -251,7 +251,7 @@
 
     renderThemes(d.themes);
     renderWhy(d);
-    updateCompareButton();
+    updateListButton();
     show("result");
     playScene(d.verdict, d.huff_risk);
   }
@@ -510,49 +510,94 @@
     }
   }
 
-  // ---------- Pick Your Pig ----------
+  // ---------- My List ----------
 
-  function readTray() {
-    try { return JSON.parse(localStorage.getItem(TRAY_KEY)) || []; } catch { return []; }
+  const LIST_MAX = 10;
+  let listMemory = null;
+
+  function readList() {
+    try { return JSON.parse(localStorage.getItem(LIST_KEY)) || []; } catch { return []; }
   }
 
-  function writeTray(items) {
-    try { localStorage.setItem(TRAY_KEY, JSON.stringify(items)); } catch { /* storage blocked: tray lives in memory only */ }
-    trayMemory = items;
-    renderTray();
+  function myList() { return listMemory || (listMemory = readList()); }
+
+  function writeList(items) {
+    listMemory = items;
+    try { localStorage.setItem(LIST_KEY, JSON.stringify(items)); } catch { /* storage blocked: list lasts for this visit only */ }
+    renderList();
   }
 
-  let trayMemory = null;
-  function tray() { return trayMemory || (trayMemory = readTray()); }
-
-  function renderTray() {
-    const items = tray();
-    $("#tray").hidden = items.length === 0;
-    $("#tray-chips").replaceChildren(
+  function renderList() {
+    const items = myList();
+    const count = $("#list-count");
+    count.hidden = items.length === 0;
+    count.textContent = items.length;
+    $("#list-empty").hidden = items.length > 0;
+    $("#list-items").replaceChildren(
       ...items.map((it) =>
-        el("span", { class: "chip" }, it.title,
-          el("button", { type: "button", "aria-label": `Remove ${it.title}`, text: "×",
-            onclick: () => writeTray(tray().filter((x) => x.data_id !== it.data_id)) }))
+        el("li", { class: "list-item" },
+          el("button", { class: "open", type: "button", onclick: () => { closeListOnSmallScreens(); inspect(it.data_id); } },
+            el("span", { class: "house-icon", "aria-hidden": "true", text: HOUSE_ICON[it.verdict] || "🏠" }),
+            el("span", { class: "info" },
+              el("strong", { text: it.title }),
+              el("small", { text: it.huff_risk != null ? `${VERDICT_WORD[it.verdict]} · ${it.huff_risk}/100` : "Not enough data" })
+            )
+          ),
+          el("button", { class: "remove", type: "button", "aria-label": `Remove ${it.title} from My List`, text: "×",
+            onclick: () => writeList(myList().filter((x) => x.data_id !== it.data_id)) })
+        )
       )
     );
-    $("#tray-go").disabled = items.length < 2;
-    updateCompareButton();
+    $("#list-compare").hidden = items.length === 0;
+    $("#list-compare").disabled = items.length < 2;
+    $("#list-hint").textContent = items.length === 1 ? "Add one more home to compare." : "";
+    updateListButton();
   }
 
-  function updateCompareButton() {
-    const btn = $("#btn-compare");
+  function updateListButton() {
     if (!current) return;
-    const inTray = tray().some((x) => x.data_id === current.data_id);
-    btn.disabled = inTray || tray().length >= 3;
-    btn.textContent = inTray ? "🐷 In Pick Your Pig" : tray().length >= 3 ? "🐷 Tray full (3 max)" : "🐷 Add to Pick Your Pig";
+    const btn = $("#btn-list");
+    const entry = myList().find((x) => x.data_id === current.data_id);
+    const saved = Boolean(entry);
+    if (entry && (entry.verdict !== current.verdict || entry.huff_risk !== current.huff_risk)) {
+      // Keep the saved verdict in sync if the score changed since it was added.
+      writeList(myList().map((x) => (x === entry ? { ...x, verdict: current.verdict, huff_risk: current.huff_risk } : x)));
+      return;
+    }
+    btn.setAttribute("aria-pressed", String(saved));
+    btn.textContent = saved ? "♥ In your list" : "♡ Add to list";
   }
 
-  function addToTray() {
+  function toggleCurrentInList() {
     if (!current) return;
-    const items = tray();
-    if (items.length >= 3 || items.some((x) => x.data_id === current.data_id)) return;
-    writeTray([...items, { data_id: current.data_id, title: current.place.title }]);
-    toast(items.length + 1 >= 2 ? "Added. Ready to huff them all!" : "Added. Inspect another building to compare.");
+    const items = myList();
+    if (items.some((x) => x.data_id === current.data_id)) {
+      writeList(items.filter((x) => x.data_id !== current.data_id));
+      toast("Removed from My List.");
+      return;
+    }
+    if (items.length >= LIST_MAX) {
+      toast(`My List holds ${LIST_MAX} homes. Remove one first.`);
+      return;
+    }
+    writeList([...items, { data_id: current.data_id, title: current.place.title, verdict: current.verdict, huff_risk: current.huff_risk }]);
+    const count = $("#list-count");
+    count.classList.remove("bump");
+    void count.offsetWidth;
+    count.classList.add("bump");
+    toast("Added to My List ♥");
+  }
+
+  function setListOpen(open) {
+    $("#my-list").hidden = !open;
+    const toggle = $("#list-toggle");
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Close My List" : "Open My List");
+    if (open) $("#list-close").focus();
+  }
+
+  function closeListOnSmallScreens() {
+    if (window.matchMedia("(max-width: 940px)").matches) setListOpen(false);
   }
 
   async function runCompare(ids, { push = true } = {}) {
@@ -587,7 +632,7 @@
     const params = new URLSearchParams(location.search);
     clearTimers();
     if (params.get("id")) return inspect(params.get("id"), { push: false });
-    if (params.get("compare")) return runCompare(params.get("compare").split(",").filter(Boolean).slice(0, 3), { push: false });
+    if (params.get("compare")) return runCompare(params.get("compare").split(",").filter(Boolean).slice(0, LIST_MAX), { push: false });
     document.title = "Big Bad Wolf Inspection Agency";
     show("home");
   }
@@ -609,11 +654,19 @@
   $("#q").addEventListener("keydown", onKey);
   $("#q").addEventListener("blur", () => setTimeout(hideSuggestions, 150));
   $("#btn-share").addEventListener("click", share);
-  $("#btn-compare").addEventListener("click", addToTray);
-  $("#tray-go").addEventListener("click", () => runCompare(tray().map((x) => x.data_id)));
+  $("#btn-list").addEventListener("click", toggleCurrentInList);
+  $("#list-toggle").addEventListener("click", () => setListOpen($("#my-list").hidden));
+  $("#list-close").addEventListener("click", () => { setListOpen(false); $("#list-toggle").focus(); });
+  $("#list-compare").addEventListener("click", () => {
+    closeListOnSmallScreens();
+    runCompare(myList().map((x) => x.data_id));
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("#my-list").hidden) { setListOpen(false); $("#list-toggle").focus(); }
+  });
   $("#message-back").addEventListener("click", goHome);
   $("#compare-back").addEventListener("click", goHome);
   window.addEventListener("popstate", route);
-  renderTray();
+  renderList();
   route();
 })();

@@ -17,6 +17,7 @@ from .serpapi_client import SerpApiClient, SerpApiError
 log = logging.getLogger("bbw.pipeline")
 
 NEWEST_PAGES = 2
+MAX_COMPARE = 10  # "My List" can hold up to this many homes
 DATA_ID_RE = re.compile(r"^0x[0-9a-fA-F]+:0x[0-9a-fA-F]+$")
 MAX_QUERY_LEN = 100
 
@@ -225,8 +226,8 @@ class Inspector:
 
     def compare(self, ids: list[str]) -> dict:
         ids = list(dict.fromkeys(i.strip() for i in ids if i.strip()))
-        if not 2 <= len(ids) <= 3:
-            raise InputError("Pick two or three buildings to compare.")
+        if not 2 <= len(ids) <= MAX_COMPARE:
+            raise InputError(f"Pick between 2 and {MAX_COMPARE} buildings to compare.")
         futures = [(i, self.compare_pool.submit(self.inspect, i)) for i in ids]
         results = []
         for data_id, future in futures:
