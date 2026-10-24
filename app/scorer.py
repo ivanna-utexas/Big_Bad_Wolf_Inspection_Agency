@@ -21,7 +21,7 @@ BRICK_BELOW = 35  # huff_risk < 35  -> brick
 STRAW_ABOVE = 65  # huff_risk > 65  -> straw (35..65 is sticks)
 
 BASE_RISK = 40.0  # where a building with no signals and a 3.5 star average lands
-SIGNAL_SCALE = 10.0  # multiplier on the average signal weight per review
+SIGNAL_SCALE = 7.0  # multiplier on the average signal weight per review
 STAR_PIVOT = 3.5  # star average that adds nothing
 STAR_SCALE = 12.0  # risk points per star below/above the pivot
 TOPIC_SCALE = 15.0
@@ -112,13 +112,20 @@ def normalize_review(raw: dict, source: str) -> dict | None:
 def merge_reviews(groups: list[tuple[str, list[dict]]]) -> list[dict]:
     """Normalize and de-duplicate. Earlier groups win, so pass 'newest' first."""
     seen: set[str] = set()
+    seen_text: set[str] = set()
     out: list[dict] = []
     for source, raws in groups:
         for raw in raws or []:
             review = normalize_review(raw, source)
-            if review and review["id"] not in seen:
-                seen.add(review["id"])
-                out.append(review)
+            if not review:
+                continue
+            # Same id, or the exact same text posted twice (spam / duplicates).
+            text_key = re.sub(r"\W+", " ", review["text"].lower()).strip()
+            if review["id"] in seen or text_key in seen_text:
+                continue
+            seen.add(review["id"])
+            seen_text.add(text_key)
+            out.append(review)
     return out
 
 

@@ -207,3 +207,16 @@ def test_narrator_retries_once_then_falls_back():
 
 def test_canned_is_deterministic():
     assert canned(CTX) == canned(CTX)
+
+
+def test_api_key_never_logged(setup, caplog):
+    import logging
+
+    import app.main  # noqa: F401  (configures logging levels)
+
+    api, _ = setup
+    with caplog.at_level(logging.DEBUG):
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        api.get("/api/search", params={"q": "castilian"})
+        api.get("/api/inspect", params={"data_id": BAD_ID})
+    assert "secret-key" not in caplog.text

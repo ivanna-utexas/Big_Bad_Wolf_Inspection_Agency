@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Big Bad Wolf Inspection Agency</title>
+  <meta name="description" content="The Big Bad Wolf inspects West Campus apartments by reading what reviewers say. Satire.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <p class="badge-line">Est. once upon a time · Licensed to huff</p>
+      <h1>Big Bad Wolf<br><span>Inspection Agency</span></h1>
+      <p class="tagline">Name a West Campus apartment. The wolf reads what reviewers say and tells you if it's brick, sticks, or straw.</p>
+    </header>
+
+    <form id="search-form" class="search" autocomplete="off" role="search">
+      <label for="q" class="sr-only">Apartment name</label>
+      <div class="search-box">
+        <input id="q" name="q" type="search" placeholder="e.g. The Castilian" maxlength="100" required
+               aria-autocomplete="list" aria-controls="suggestions">
+        <button type="submit" class="btn btn-primary">Inspect</button>
+      </div>
+      <ul id="suggestions" class="suggestions" role="listbox" hidden></ul>
+    </form>
+
+    <!-- Compare tray -->
+    <section id="tray" class="tray" hidden aria-label="Pick Your Pig">
+      <span class="tray-label">Pick Your Pig:</span>
+      <div id="tray-chips" class="tray-chips"></div>
+      <button id="tray-go" class="btn btn-small" type="button">Huff them all</button>
+    </section>
+
+    <main id="view" aria-live="polite">
+      <!-- Home -->
+      <section id="home" class="panel intro">
+        <div class="wolf-slot" data-wolf></div>
+        <p class="wolf-says">"Little pigs, little pigs, let me read your reviews."</p>
+        <p class="hint">Try one of these:</p>
+        <div id="quick-picks" class="quick-picks"></div>
+      </section>
+
+      <!-- Candidates -->
+      <section id="candidates" class="panel" hidden>
+        <h2>Which building, exactly?</h2>
+        <p class="sub">The wolf found these. Pick the right door.</p>
+        <div id="candidate-list" class="candidate-list"></div>
+      </section>
+
+      <!-- Loading -->
+      <section id="loading" class="panel loading" hidden>
+        <div class="wolf-slot inhaling" data-wolf></div>
+        <p id="loading-line" class="wolf-says">Taking a deeeep breath…</p>
+        <div class="dots"><span></span><span></span><span></span></div>
+      </section>
+
+      <!-- Error / not enough data -->
+      <section id="message" class="panel message" hidden>
+        <div class="wolf-slot" data-wolf></div>
+        <p id="message-line" class="wolf-says"></p>
+        <p id="message-detail" class="sub"></p>
+        <button id="message-back" class="btn" type="button">Back to the forest</button>
+      </section>
+
+      <!-- Result -->
+      <section id="result" class="result" hidden>
+        <div class="place-head">
+          <img id="r-thumb" alt="" hidden>
+          <div>
+            <h2 id="r-title"></h2>
+            <p id="r-address" class="sub"></p>
+          </div>
+        </div>
+
+        <p id="r-opening" class="wolf-says big"></p>
+
+        <div class="scene-wrap">
+          <svg id="scene" class="scene" viewBox="0 0 700 280" role="img" aria-labelledby="scene-title">
+            <title id="scene-title">Three little pig houses and the wolf</title>
+            <defs>
+              <pattern id="bricks" width="28" height="14" patternUnits="userSpaceOnUse">
+                <rect width="28" height="14" fill="var(--brick)"/>
+                <path d="M0 0.5H28M0 7.5H28M7 0.5V7.5M21 7.5V14" stroke="var(--mortar)" stroke-width="1.5"/>
+              </pattern>
+            </defs>
+            <path class="hill" d="M0 250 Q160 228 320 244 T700 238 V280 H0Z"/>
+
+            <!-- straw -->
+            <g class="house" id="house-straw" data-kind="straw">
+              <g class="house-body">
+                <rect x="40" y="168" width="110" height="80" fill="var(--straw)" stroke="var(--ink)" stroke-width="3"/>
+                <path d="M50 178v62M64 176v66M78 178v64M92 176v66M106 178v62M120 176v66M134 178v64" stroke="var(--straw-dark)" stroke-width="2"/>
+                <path d="M28 172 L95 110 L162 172 Z" fill="var(--straw-dark)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M60 160 l10 -18 M80 150 l8 -22 M100 150 l-6 -26 M120 160 l-10 -20" stroke="var(--straw)" stroke-width="2.5"/>
+                <rect x="80" y="206" width="30" height="42" rx="15" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
+              </g>
+            </g>
+
+            <!-- sticks -->
+            <g class="house" id="house-sticks" data-kind="sticks">
+              <g class="house-body">
+                <rect x="210" y="160" width="120" height="88" fill="var(--sticks)" stroke="var(--ink)" stroke-width="3"/>
+                <path d="M222 160v88M238 160v88M254 160v88M286 160v88M302 160v88M318 160v88" stroke="var(--sticks-dark)" stroke-width="4" stroke-linecap="round"/>
+                <path d="M212 190 L328 186 M212 222 L328 226" stroke="var(--sticks-dark)" stroke-width="3"/>
+                <path d="M196 164 L270 104 L344 164 Z" fill="var(--sticks-dark)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M220 156 L270 114 L320 156" fill="none" stroke="var(--sticks)" stroke-width="3"/>
+                <rect x="256" y="204" width="30" height="44" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
+              </g>
+            </g>
+
+            <!-- brick -->
+            <g class="house" id="house-brick" data-kind="brick">
+              <g class="house-body">
+                <rect x="386" y="150" width="130" height="98" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
+                <rect x="478" y="96" width="20" height="40" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
+                <path d="M372 154 L451 92 L530 154 Z" fill="var(--roof)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+                <rect x="400" y="172" width="28" height="26" fill="var(--window)" stroke="var(--ink)" stroke-width="3"/>
+                <rect x="437" y="200" width="30" height="48" fill="var(--door)" stroke="var(--ink)" stroke-width="3"/>
+              </g>
+            </g>
+
+            <!-- pigs sit in front of each house so they stay put when a house falls -->
+            <g class="pig" transform="translate(140 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(320 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(510 236)"><use href="#pig-shape"/></g>
+            <defs>
+              <g id="pig-shape">
+                <ellipse cx="0" cy="0" rx="15" ry="13" fill="var(--pig)" stroke="var(--ink)" stroke-width="2.5"/>
+                <path d="M-11 -9 L-13 -18 L-5 -12 Z M11 -9 L13 -18 L5 -12 Z" fill="var(--pig)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>
+                <ellipse cx="0" cy="3" rx="6" ry="4.5" fill="var(--pig-dark)" stroke="var(--ink)" stroke-width="1.5"/>
+                <circle cx="-2" cy="3" r="1.2" fill="var(--ink)"/><circle cx="2" cy="3" r="1.2" fill="var(--ink)"/>
+                <circle cx="-6" cy="-4" r="1.8" fill="var(--ink)"/><circle cx="6" cy="-4" r="1.8" fill="var(--ink)"/>
+              </g>
+            </defs>
+
+            <!-- wind -->
+            <g class="wind" stroke="var(--wind)" stroke-width="4" stroke-linecap="round" fill="none">
+              <path d="M585 150 C 480 140, 420 160, 340 150"/>
+              <path d="M585 168 C 470 175, 380 160, 300 175 q -20 4 -16 -8"/>
+              <path d="M585 186 C 490 200, 400 190, 330 200"/>
+            </g>
+
+            <!-- wolf -->
+            <g id="scene-wolf" class="scene-wolf" transform="translate(580 112) scale(0.58)"></g>
+          </svg>
+          <p id="r-stamp" class="stamp" aria-hidden="true"></p>
+        </div>
+
+        <div class="meter-wrap">
+          <div class="meter-labels"><span>Brick</span><span>Sticks</span><span>Straw</span></div>
+          <div class="meter" role="meter" aria-label="Huff-and-puff meter" aria-valuemin="0" aria-valuemax="100" id="meter">
+            <div class="meter-fill" id="meter-fill"></div>
+            <span class="tick" style="left:35%"></span><span class="tick" style="left:65%"></span>
+          </div>
+          <p class="meter-number">Huff-and-puff meter: <strong id="meter-number">0</strong>/100</p>
+        </div>
+
+        <p id="r-verdict-line" class="verdict-line"></p>
+        <p id="r-sample" class="sample"></p>
+
+        <div class="actions">
+          <button id="btn-replay" class="btn" type="button">🌬️ Huff again</button>
+          <button id="btn-share" class="btn" type="button">🔗 Share</button>
+          <button id="btn-compare" class="btn" type="button">🐷 Add to Pick Your Pig</button>
+        </div>
+
+        <h3 class="section-title">What reviewers say</h3>
+        <div id="r-themes" class="themes"></div>
+
+        <details class="why">
+          <summary>Why this verdict? (the wolf shows his math)</summary>
+          <div id="r-why"></div>
+        </details>
+
+        <p id="r-closing" class="wolf-says closing"></p>
+      </section>
+
+      <!-- Compare -->
+      <section id="compare" class="panel" hidden>
+        <h2>Pick Your Pig</h2>
+        <p class="sub">The wolf huffs at every building. Only one pig stays dry.</p>
+        <div id="compare-list" class="compare-list"></div>
+        <button id="compare-back" class="btn" type="button">Back</button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p><strong>Satire based on what reviewers say, not facts about the building.</strong>
+        The wolf quotes short, anonymized snippets of public Google Maps reviews and never shows reviewer names or photos.
+        Always tour a place and read your lease.</p>
+      <p class="credits">Reviews via SerpApi (Google Maps + Google Maps Reviews). Built at HackTX 2026.</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <template id="wolf-template">
+    <svg class="wolf" viewBox="0 0 200 200" aria-hidden="true">
+      <g class="wolf-body">
+        <path d="M70 200 C 60 150, 80 120, 110 118 C 150 116, 170 150, 168 200 Z" fill="var(--wolf)" stroke="var(--ink)" stroke-width="4"/>
+        <path d="M95 200 C 98 170, 115 150, 140 160" fill="none" stroke="var(--wolf-light)" stroke-width="10" stroke-linecap="round"/>
+        <!-- inspector clipboard -->
+        <rect x="128" y="150" width="34" height="44" rx="4" fill="var(--clipboard)" stroke="var(--ink)" stroke-width="3" transform="rotate(-8 145 172)"/>
+        <path d="M135 166h20M135 175h20M135 184h12" stroke="var(--ink)" stroke-width="2" transform="rotate(-8 145 172)"/>
+      </g>
+      <g class="wolf-head">
+        <path d="M120 40 L138 6 L150 48 Z" fill="var(--wolf)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M128 38 L137 18 L143 42 Z" fill="var(--wolf-ear)"/>
+        <path d="M150 50 L178 22 L176 66 Z" fill="var(--wolf)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+        <!-- head + snout pointing left -->
+        <path d="M168 70 C 172 110, 150 130, 120 128 C 100 127, 90 118, 70 112 C 40 104, 22 100, 20 90 C 18 80, 30 74, 52 72 C 80 68, 100 44, 130 42 C 152 41, 166 52, 168 70 Z"
+              fill="var(--wolf)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M30 96 C 50 104, 80 108, 104 116" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="22" cy="84" rx="9" ry="7" fill="var(--ink)"/>
+        <ellipse class="wolf-cheek" cx="100" cy="98" rx="16" ry="13" fill="var(--wolf-light)"/>
+        <!-- inspector hat -->
+        <path d="M100 46 C 112 22, 160 20, 168 50 Z" fill="var(--hat)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M92 50 C 120 40, 160 44, 178 54" fill="none" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="112" cy="68" r="8" fill="#fff" stroke="var(--ink)" stroke-width="3"/>
+        <circle class="wolf-pupil" cx="108" cy="68" r="3.6" fill="var(--ink)"/>
+        <path d="M98 57 L122 61" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

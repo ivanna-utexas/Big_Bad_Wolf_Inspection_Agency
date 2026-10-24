@@ -13,6 +13,9 @@ from .pipeline import Inspector, InputError
 from .serpapi_client import SerpApiClient, SerpApiError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+# httpx logs full request URLs at INFO, and SerpApi URLs carry the API key.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 WOLF_ERRORS = {
     "config": "The wolf lost his inspector badge (the server is missing its SerpApi key).",
@@ -23,10 +26,18 @@ WOLF_ERRORS = {
 
 
 def build_inspector() -> Inspector:
-    cache = Cache(config.CACHE_PATH)
     signals, probes = scorer.load_signals(config.DATA_DIR / "signals.json")
+    if config.FAKE_SERPAPI:
+        # Offline mode: synthetic buildings, separate cache so real data never mixes in.
+        from .fake_serpapi import fake_http_client
+
+        cache = Cache(config.CACHE_PATH.with_name("cache-fake.sqlite3"))
+        client = SerpApiClient("fake", cache, http=fake_http_client())
+    else:
+        cache = Cache(config.CACHE_PATH)
+        client = SerpApiClient(config.SERPAPI_API_KEY, cache, use_restrictor=config.JSON_RESTRICTOR_ENABLED)
     return Inspector(
-        client=SerpApiClient(config.SERPAPI_API_KEY, cache, use_restrictor=config.JSON_RESTRICTOR_ENABLED),
+        client=client,
         cache=cache,
         narrator=Narrator(config.GEMINI_API_KEY, config.GEMINI_MODEL),
         signals=signals,
@@ -69,7 +80,7 @@ def create_app(inspector: Inspector | None = None) -> FastAPI:
 
     @app.get("/api/health")
     def health():
-        return {"ok": True, "serpapi_key": bool(config.SERPAPI_API_KEY), "llm": bool(config.GEMINI_API_KEY)}
+        return {"ok": True, "serpapi_key": bool(config.SERPAPI_API_KEY), "fake_serpapi": config.FAKE_SERPAPI, "llm": bool(config.GEMINI_API_KEY)}
 
     @app.get("/")
     def index():

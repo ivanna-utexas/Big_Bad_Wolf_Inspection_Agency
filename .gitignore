@@ -2,6 +2,6 @@
 __pycache__/
 *.pyc
 .env
-cache.sqlite3*
+cache*.sqlite3*
 .pytest_cache/
 .DS_Store

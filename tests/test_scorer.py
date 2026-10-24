@@ -48,9 +48,9 @@ def test_deterministic():
 
 
 def test_huff_risk_is_clamped():
-    raws = [raw_review(i, "mold leak roaches bed bugs rats flood unsafe break-in", 1) for i in range(30)]
+    raws = [raw_review(i, f"mold leak roaches bed bugs rats flood unsafe break-in, day {i}", 1) for i in range(30)]
     assert run(raws)["huff_risk"] == 100
-    raws = [raw_review(i, "maintenance is super quick, very clean, quiet, secure, well maintained", 5) for i in range(30)]
+    raws = [raw_review(i, f"maintenance is super quick, very clean, quiet, secure, well maintained, year {i}", 5) for i in range(30)]
     assert run(raws)["huff_risk"] == 0
 
 
@@ -74,14 +74,14 @@ def test_engagement_weight_caps_at_ten_likes():
 
 
 def test_old_complaints_count_less_than_new_ones():
-    filler = [raw_review(100 + i, "Fine place.", 4) for i in range(20)]
-    new = run(filler + [raw_review(i, "Mold and roaches.", 4, days_ago=10) for i in range(5)])
-    old = run(filler + [raw_review(i, "Mold and roaches.", 4, days_ago=1500) for i in range(5)])
+    filler = [raw_review(100 + i, f"Fine place, unit {i}.", 4) for i in range(20)]
+    new = run(filler + [raw_review(i, f"Mold and roaches in unit {i}.", 4, days_ago=10) for i in range(5)])
+    old = run(filler + [raw_review(i, f"Mold and roaches in unit {i}.", 4, days_ago=1500) for i in range(5)])
     assert new["huff_risk"] > old["huff_risk"]
 
 
 def test_negation_is_ignored():
-    filler = [raw_review(100 + i, "Fine place.", 4) for i in range(20)]
+    filler = [raw_review(100 + i, f"Fine place, unit {i}.", 4) for i in range(20)]
     negated = run(filler + [raw_review(1, "Never had any roaches and no mold at all.", 4)])
     terms = {s["term"] for s in negated["signals_fired"]}
     assert "roaches" not in terms and "mold / mildew" not in terms
@@ -118,14 +118,14 @@ def test_varied_replies_get_a_bonus():
         "Sorry about the parking gate. A new sensor was installed and towing rules changed.",
         "We had pest control treat units on floor four and will recheck monthly.",
     ]
-    raws = [raw_review(i, "It's fine for the price.", 3) for i in range(20)]
-    raws += [raw_review(50 + i, "Had a problem.", 2, response=r) for i, r in enumerate(replies)]
+    raws = [raw_review(i, f"It's fine for the price, unit {i}.", 3) for i in range(20)]
+    raws += [raw_review(50 + i, f"Had a problem in unit {i}.", 2, response=r) for i, r in enumerate(replies)]
     assert run(raws)["components"]["owner_replies"] == -scorer.VARIED_REPLY_BONUS
 
 
 def test_supplemental_sources_count_less():
-    base = [raw_review(100 + i, "Fine place.", 4) for i in range(20)]
-    extra = [raw_review(i, "Mold everywhere.", 1) for i in range(5)]
+    base = [raw_review(100 + i, f"Fine place, unit {i}.", 4) for i in range(20)]
+    extra = [raw_review(i, f"Mold everywhere in unit {i}.", 1) for i in range(5)]
     as_newest = scorer.score(scorer.merge_reviews([("newest", base + extra)]), SIGNALS, today=TODAY)
     as_probe = scorer.score(scorer.merge_reviews([("newest", base), ("probe", extra)]), SIGNALS, today=TODAY)
     assert as_probe["components"]["signals"] < as_newest["components"]["signals"]
@@ -164,3 +164,8 @@ def test_empty_and_junk_reviews_do_not_crash():
     raws = [{}, {"snippet": ""}, {"snippet": "ok", "rating": "bad", "likes": None, "iso_date": "garbage"}]
     result = run(raws)
     assert result["verdict"] == "not_enough_data"
+
+
+def test_duplicate_text_counts_once():
+    raws = [raw_review(i, "Same exact review text.", 1) for i in range(20)]
+    assert len(scorer.merge_reviews([("newest", raws)])) == 1
