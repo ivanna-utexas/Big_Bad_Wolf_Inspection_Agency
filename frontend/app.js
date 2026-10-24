@@ -378,10 +378,10 @@
     const plan = {
       wall: total
         ? { skew: rand(-25, 25), dx: rand(-8, 8), delay: 0 }
-        : { skew: rand(-14, -8), dx: -4, delay: 0 },
+        : { skew: rand(-14, -8), dx: 4, delay: 0 }, // top leans right, with the wind
       roof: total
         ? { rot: rand(-22, 22), dx: rand(-20, 20), delay: 140 }
-        : { rot: rand(-26, -18), dx: rand(-38, -28), delay: 260 },
+        : { rot: rand(18, 26), dx: rand(28, 38), delay: 260 },
       door: { rot: Math.random() < 0.5 ? -88 : 88, delay: 80 },
     };
 
@@ -427,7 +427,7 @@
     puffDust(wall, shiftX, total ? 6 : 3, speed);
   }
 
-  // Bits of straw or sticks blown left by the wolf, landing on the grass.
+  // Bits of straw or sticks blown right by the wolf, landing on the grass.
   function scatterDebris(kind, wall, shiftX, count, speed) {
     const layer = $("#debris");
     const color = kind === "straw" ? "var(--straw-dark)" : "var(--sticks-dark)";
@@ -441,7 +441,7 @@
       layer.append(bit);
       const x0 = shiftX + rand(wall.x, wall.x + wall.width);
       const y0 = rand(wall.y - 40, wall.y + wall.height * 0.6);
-      const x1 = Math.max(12, x0 + rand(-120, 20)); // stay inside the scene
+      const x1 = Math.min(688, x0 + rand(-20, 120)); // blown right, but stay inside the scene
       const y1 = GROUND - rand(0, 5);
       const spin = rand(-540, 540);
       bit.animate(
@@ -466,8 +466,8 @@
       cloud.animate(
         [
           { transform: `translate(${x}px, ${GROUND - 4}px) scale(0.2)`, opacity: 0 },
-          { transform: `translate(${x + rand(-10, 4)}px, ${GROUND - 14}px) scale(1.2)`, opacity: 0.85, offset: 0.35 },
-          { transform: `translate(${x + rand(-30, -8)}px, ${GROUND - 26}px) scale(1.9)`, opacity: 0 },
+          { transform: `translate(${x + rand(-4, 10)}px, ${GROUND - 14}px) scale(1.2)`, opacity: 0.85, offset: 0.35 },
+          { transform: `translate(${x + rand(8, 30)}px, ${GROUND - 26}px) scale(1.9)`, opacity: 0 },
         ],
         { duration: 1400 * speed, delay: (500 + i * 60) * speed, easing: "ease-out", fill: "both" }
       );

@@ -92,7 +92,7 @@
             <path class="hill" d="M0 250 Q160 228 320 244 T700 238 V280 H0Z"/>
 
             <!-- straw (left) -->
-            <g class="house" id="house-straw" data-kind="straw">
+            <g class="house" id="house-straw" data-kind="straw" transform="translate(150 0)">
               <g class="house-body">
                 <rect data-piece="wall" x="40" y="168" width="110" height="80" fill="var(--straw)" stroke="var(--ink)" stroke-width="3"/>
                 <path data-piece="wall" d="M50 178v62M64 176v66M78 178v64M92 176v66M106 178v62M120 176v66M134 178v64" stroke="var(--straw-dark)" stroke-width="2"/>
@@ -103,7 +103,7 @@
             </g>
 
             <!-- sticks -->
-            <g class="house" id="house-sticks" data-kind="sticks">
+            <g class="house" id="house-sticks" data-kind="sticks" transform="translate(150 0)">
               <g class="house-body">
                 <rect data-piece="wall" x="210" y="160" width="120" height="88" fill="var(--sticks)" stroke="var(--ink)" stroke-width="3"/>
                 <path data-piece="wall" d="M222 160v88M238 160v88M254 160v88M286 160v88M302 160v88M318 160v88" stroke="var(--sticks-dark)" stroke-width="4" stroke-linecap="round"/>
@@ -115,7 +115,7 @@
             </g>
 
             <!-- brick (right, next to the wolf) -->
-            <g class="house" id="house-brick" data-kind="brick">
+            <g class="house" id="house-brick" data-kind="brick" transform="translate(150 0)">
               <g class="house-body">
                 <rect data-piece="wall" x="386" y="150" width="130" height="98" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
                 <rect data-piece="roof" x="478" y="96" width="20" height="40" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
@@ -128,9 +128,9 @@
             <g id="debris" aria-hidden="true"></g>
 
             <!-- pigs sit in front of each house so they stay put when a house falls -->
-            <g class="pig" transform="translate(140 236)"><use href="#pig-shape"/></g>
-            <g class="pig" transform="translate(320 236)"><use href="#pig-shape"/></g>
-            <g class="pig" transform="translate(510 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(290 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(470 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(660 236)"><use href="#pig-shape"/></g>
             <defs>
               <g id="pig-shape">
                 <ellipse cx="0" cy="0" rx="15" ry="13" fill="var(--pig)" stroke="var(--ink)" stroke-width="2.5"/>
@@ -143,13 +143,13 @@
 
             <!-- wind -->
             <g class="wind" stroke="var(--wind)" stroke-width="4" stroke-linecap="round" fill="none">
-              <path d="M585 150 C 480 140, 420 160, 340 150"/>
-              <path d="M585 168 C 470 175, 380 160, 300 175 q -20 4 -16 -8"/>
-              <path d="M585 186 C 490 200, 400 190, 330 200"/>
+              <path d="M112 150 C 220 140, 280 160, 360 150"/>
+              <path d="M112 168 C 230 175, 320 160, 400 175 q 20 4 16 -8"/>
+              <path d="M112 186 C 210 200, 300 190, 370 200"/>
             </g>
 
             <!-- wolf -->
-            <g id="scene-wolf" class="scene-wolf" transform="translate(580 112) scale(0.58)"></g>
+            <g id="scene-wolf" class="scene-wolf" transform="translate(120 112) scale(-0.58 0.58)"></g>
           </svg>
           <p id="r-stamp" class="stamp" aria-hidden="true"></p>
         </div>
