@@ -177,11 +177,11 @@ h1 span { color: var(--accent); }
 .meter-wrap { margin: 12px 0 4px; }
 .meter-labels { display: flex; justify-content: space-between; font-weight: 700; font-size: .85rem; color: var(--ink-soft); }
 .meter {
-  position: relative; height: 26px; border: 3px solid var(--ink); border-radius: 999px; overflow: hidden;
-  background: linear-gradient(90deg, #cfe8c4 0 35%, #f6e2b0 35% 65%, #f4c0b3 65%);
+  position: relative; display: flex; justify-content: flex-end; height: 26px; border: 3px solid var(--ink); border-radius: 999px; overflow: hidden;
+  background: linear-gradient(90deg, #f4c0b3 0 35%, #f6e2b0 35% 65%, #cfe8c4 65%);
 }
 .meter-fill {
-  height: 100%; width: 0; background: linear-gradient(90deg, var(--good), #d9a43a 50%, var(--bad));
+  height: 100%; width: 0; background: linear-gradient(270deg, var(--good), #d9a43a 50%, var(--bad)); background-position: right;
   transition: width 1.6s cubic-bezier(.2, .8, .2, 1);
 }
 .tick { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--ink); opacity: .5; }

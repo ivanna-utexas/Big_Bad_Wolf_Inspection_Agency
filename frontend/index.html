@@ -91,8 +91,8 @@
             </defs>
             <path class="hill" d="M0 250 Q160 228 320 244 T700 238 V280 H0Z"/>
 
-            <!-- straw (shifted right, next to the wolf) -->
-            <g class="house" id="house-straw" data-kind="straw" transform="translate(356 0)">
+            <!-- straw (left) -->
+            <g class="house" id="house-straw" data-kind="straw">
               <g class="house-body">
                 <rect data-piece="wall" x="40" y="168" width="110" height="80" fill="var(--straw)" stroke="var(--ink)" stroke-width="3"/>
                 <path data-piece="wall" d="M50 178v62M64 176v66M78 178v64M92 176v66M106 178v62M120 176v66M134 178v64" stroke="var(--straw-dark)" stroke-width="2"/>
@@ -114,8 +114,8 @@
               </g>
             </g>
 
-            <!-- brick (shifted left) -->
-            <g class="house" id="house-brick" data-kind="brick" transform="translate(-356 0)">
+            <!-- brick (right, next to the wolf) -->
+            <g class="house" id="house-brick" data-kind="brick">
               <g class="house-body">
                 <rect data-piece="wall" x="386" y="150" width="130" height="98" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
                 <rect data-piece="roof" x="478" y="96" width="20" height="40" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
@@ -155,7 +155,7 @@
         </div>
 
         <div class="meter-wrap">
-          <div class="meter-labels"><span>Brick</span><span>Sticks</span><span>Straw</span></div>
+          <div class="meter-labels"><span>Straw</span><span>Sticks</span><span>Brick</span></div>
           <div class="meter" role="meter" aria-label="Huff-and-puff meter" aria-valuemin="0" aria-valuemax="100" id="meter">
             <div class="meter-fill" id="meter-fill"></div>
             <span class="tick" style="left:35%"></span><span class="tick" style="left:65%"></span>

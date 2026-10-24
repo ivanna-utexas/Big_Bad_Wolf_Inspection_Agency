@@ -11,7 +11,7 @@ Type the name of an apartment complex near UT Austin. The Big Bad Wolf, now a li
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-cp .env          # then add SERPAPI_API_KEY (and GEMINI_API_KEY if you have one)
+cp .env.example          # then add SERPAPI_API_KEY (and GEMINI_API_KEY if you have one)
 .venv/bin/uvicorn app.main:app --reload --port 8000
 # open http://localhost:8000
 ```
