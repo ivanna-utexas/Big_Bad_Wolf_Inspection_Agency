@@ -441,7 +441,7 @@
       layer.append(bit);
       const x0 = shiftX + rand(wall.x, wall.x + wall.width);
       const y0 = rand(wall.y - 40, wall.y + wall.height * 0.6);
-      const x1 = x0 + rand(-120, 20);
+      const x1 = Math.max(12, x0 + rand(-120, 20)); // stay inside the scene
       const y1 = GROUND - rand(0, 5);
       const spin = rand(-540, 540);
       bit.animate(
@@ -478,7 +478,7 @@
     const fill = $("#meter-fill");
     fill.style.transition = "";
     fill.style.width = risk + "%";
-    // Stretch the gradient over the full track so 100 reaches the red end.
+    // Stretch the gradient over the full track so 100 reaches the red (straw) end on the left.
     fill.style.backgroundSize = risk > 0 ? `${10000 / risk}% 100%` : "100% 100%";
     const start = performance.now();
     const duration = 1600;

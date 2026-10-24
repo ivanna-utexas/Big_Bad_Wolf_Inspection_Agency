@@ -126,7 +126,7 @@ All constants are at the top of `app/scorer.py`. The "Why this verdict?" drawer 
 ## Stretch goals included
 
 - **Pick Your Pig** compare mode: add 2–3 buildings to the tray and huff them all. `/api/compare` runs them in parallel and crowns the survivor.
-- Crumbling houses: straw collapses into a pile with straw blown across the grass, sticks buckle and drop their roof, brick stands.
+- Crumbling houses: straw (left) collapses into a pile with straw blown across the grass, sticks buckle and drop their roof, brick (right, next to the wolf) stands. The meter runs straw (red, left) to brick (green, right) and fills from the brick end as risk rises.
 - A link to the building's Google Maps listing (pinned with its `place_id`), plus a share button that copies `/?id=<data_id>` (uses the native share sheet on phones when copying isn't allowed).
 - Search-box autocomplete (third SerpApi engine).
 - Not added: sound effects.
