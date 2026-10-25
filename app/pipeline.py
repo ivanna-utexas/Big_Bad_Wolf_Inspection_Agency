@@ -45,10 +45,102 @@ def google_maps_url(title: str, address: str, place_id: str = "") -> str:
     return "https://www.google.com/maps/search/?" + urlencode(params)
 
 
+# Rough box around the City of Austin (lat, lng).
+AUSTIN_BOUNDS = ((30.10, -97.95), (30.52, -97.55))
+
+# Google Maps place types that count as somewhere people live.
+RESIDENTIAL_WORDS = (
+    "apartment", "condominium", "condo", "housing", "residential", "dormitory", "townhouse",
+    "townhome", "duplex", "loft", "mobile home park", "co-op", "cooperative",
+)
+
+
+def _in_austin(item: dict) -> bool:
+    gps = item.get("gps_coordinates") or {}
+    lat, lng = _num(gps.get("latitude")), _num(gps.get("longitude"))
+    if lat is not None and lng is not None:
+        (south, west), (north, east) = AUSTIN_BOUNDS
+        return south <= lat <= north and west <= lng <= east
+    return "austin" in (item.get("address") or "").lower()
+
+
+def _place_types(item: dict) -> list[str]:
+    """Google's place types. `type` is a string in local_results but a list in place_results (single exact match)."""
+    out = []
+    for value in (item.get("type"), item.get("types")):
+        values = value if isinstance(value, list) else [value]
+        out += [v for v in values if isinstance(v, str) and v]
+    return out
+
+
+# Dorms are often typed only as "Building" or "University department", so also trust the name.
+# Plain "Hall" isn't enough: most UT academic buildings are halls too.
+DORM_NAME_RE = re.compile(r"\bdorm(itory|itories|s)?\b|\bresiden(ce|tial|t) halls?\b|\bres halls?\b", re.IGNORECASE)
+
+
+def _is_residential(item: dict) -> bool:
+    text = " ".join(_place_types(item)).lower()
+    if any(word in text for word in RESIDENTIAL_WORDS):
+        return True
+    return bool(DORM_NAME_RE.search(item.get("title") or ""))
+
+
+# ---- rent ------------------------------------------------------------------
+# Monthly rent comes from a regular Google search. Listing sites like Apartments.com
+# give a structured "price_from / price_to"; otherwise we read $ amounts out of
+# snippets that mention the building by name. Anything outside this band is not a
+# monthly rent (fees, yearly dorm rates, deposits...).
+RENT_MIN, RENT_MAX = 300, 6000
+MONEY_RE = re.compile(r"\$\s?(\d{1,2},\d{3}|\d{3,4})(?:\.\d{2})?(?!\s*(?:off|in savings|savings|/\s*y|per year|a year|/yr))", re.I)
+
+
+def _norm(text: str) -> str:
+    text = re.sub(r"[^a-z0-9]+", " ", (text or "").lower()).strip()
+    return re.sub(r"^the ", "", text)
+
+
+def parse_rent(data: dict, title: str) -> dict | None:
+    """Rent range ({low, high, source}) for `title` from a google search payload, or None."""
+    name = _norm(title)
+    if not name:
+        return None
+    rich, loose = [], []
+    for r in data.get("organic_results") or []:
+        source = r.get("source") or r.get("displayed_link") or ""
+        text = f"{source} {r.get('title') or ''} {r.get('snippet') or ''}"
+        source = source.split(" · ")[0]  # "Facebook · The Castilian Residence Hall" -> "Facebook"
+        if name not in _norm(text):
+            continue  # generic "average rent in Austin" pages would skew the range
+        ext = ((r.get("rich_snippet") or {}).get("top") or {}).get("detected_extensions") or {}
+        lo, hi = _num(ext.get("price_from")), _num(ext.get("price_to"))
+        if lo is not None and RENT_MIN <= lo <= RENT_MAX:
+            hi = hi if hi is not None and lo <= hi <= RENT_MAX else lo
+            rich.append((lo, hi, source))
+            continue
+        for m in MONEY_RE.finditer(r.get("snippet") or ""):
+            value = float(m.group(1).replace(",", ""))
+            if RENT_MIN <= value <= RENT_MAX:
+                loose.append((value, value, source))
+    found = rich or loose
+    if not found:
+        return None
+    sources = list(dict.fromkeys(s for _, _, s in found if s))
+    return {
+        "low": int(min(lo for lo, _, _ in found)),
+        "high": int(max(hi for _, hi, _ in found)),
+        "source": sources[0] if sources else "",
+    }
+
+
 def _candidate(item: dict) -> dict | None:
     if not item.get("data_id"):
         return None
+    if not (_in_austin(item) and _is_residential(item)):
+        return None
+    gps = item.get("gps_coordinates") or {}
     return {
+        "lat": _num(gps.get("latitude")),
+        "lng": _num(gps.get("longitude")),
         "title": item.get("title") or "Unnamed building",
         "address": item.get("address") or "",
         "data_id": item["data_id"],
@@ -56,7 +148,7 @@ def _candidate(item: dict) -> dict | None:
         "rating": _num(item.get("rating")),
         "reviews": _num(item.get("reviews"), int),
         "thumbnail": item.get("thumbnail") or "",
-        "type": item.get("type") or "",
+        "type": (_place_types(item) or [""])[0],
     }
 
 
@@ -105,7 +197,8 @@ class Inspector:
         out = []
         for s in data.get("suggestions") or []:
             value = s.get("value")
-            if value:
+            # Only suggest places in Austin; the subtext is the place's address or area.
+            if value and "austin" in (s.get("subtext") or "").lower():
                 out.append({"value": value, "subtext": s.get("subtext") or ""})
         return {"suggestions": out[:5]}
 
@@ -182,6 +275,9 @@ class Inspector:
             data_id, scored["sample"]["reviews_used"], scored["verdict"], scored["huff_risk"],
         )
 
+        place["rent"] = self._rent(place["title"])
+        self._remember_on_map(data_id, place, known, scored)
+
         narration = self._narrate(place["title"], scored)
         comments = {t["theme"]: t["wolf_comment"] for t in narration.get("themes", [])}
         themes = [
@@ -210,6 +306,37 @@ class Inspector:
             },
             "cached": all_cached,
         }
+
+    # ---- neighborhood map ----------------------------------------------------
+
+    def _remember_on_map(self, data_id: str, place: dict, known: dict, scored: dict) -> None:
+        """Pin this building on the map. Coordinates come from search, so share-link-only visits are skipped."""
+        lat, lng = known.get("lat"), known.get("lng")
+        if lat is None or lng is None or scored["verdict"] not in ("brick", "sticks", "straw"):
+            return
+        self.cache.set(f"inspected:{data_id}", {
+            "data_id": data_id,
+            "title": place["title"],
+            "address": place["address"],
+            "lat": lat,
+            "lng": lng,
+            "verdict": scored["verdict"],
+            "huff_risk": scored["huff_risk"],
+            "rent": place.get("rent"),
+        })
+
+    def _rent(self, title: str) -> dict | None:
+        """One cached Google search per building. Rent is a nice-to-have, so failures never sink an inspection."""
+        try:
+            data, _ = self.client.rent_search(f'"{title}" Austin TX rent')
+        except SerpApiError as exc:
+            log.warning("rent lookup failed for %s: %s", title, exc)
+            return None
+        return parse_rent(data, title)
+
+    def map(self) -> dict:
+        buildings = sorted(self.cache.scan("inspected:"), key=lambda b: (b["huff_risk"], b["data_id"]))
+        return {"buildings": buildings}
 
     def _narrate(self, title: str, scored: dict) -> dict:
         context = build_context(title, scored)

@@ -26,3 +26,6 @@ CACHE_PATH = Path(os.getenv("BBW_CACHE_PATH", str(ROOT / "cache.sqlite3")))
 AUTOCOMPLETE_ENABLED = _flag("BBW_AUTOCOMPLETE", True)
 JSON_RESTRICTOR_ENABLED = _flag("BBW_JSON_RESTRICTOR", True)
 FAKE_SERPAPI = _flag("BBW_FAKE_SERPAPI", False)
+# Map background tiles for the neighborhood map. Paste the tile URL from your CARTO account,
+# key included. The browser loads tiles directly, so whatever is here is visible to visitors.
+MAP_TILE_URL = os.getenv("BBW_MAP_TILE_URL", "") or "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"

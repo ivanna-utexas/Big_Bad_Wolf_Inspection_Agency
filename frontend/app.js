@@ -2,7 +2,7 @@
 
 (() => {
   const $ = (sel) => document.querySelector(sel);
-  const VIEWS = ["home", "candidates", "loading", "message", "result", "compare"];
+  const VIEWS = ["home", "candidates", "loading", "message", "result", "compare", "map"];
   const QUICK_PICKS = ["The Castilian", "26 West", "Lark Austin", "Villas on Rio"];
   const LOADING_LINES = [
     "Taking a deeeep breath…",
@@ -38,8 +38,16 @@
     return node;
   }
 
+  let enterTimer = null;
+
   function show(id) {
     for (const v of VIEWS) $("#" + v).hidden = v !== id;
+    const view = $("#" + id);
+    view.classList.remove("enter");
+    void view.offsetWidth; // restart the animation
+    view.classList.add("enter");
+    clearTimeout(enterTimer);
+    enterTimer = setTimeout(() => view.classList.remove("enter"), 800);
     if (id !== "loading") stopLoadingLines();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -63,6 +71,16 @@
     return isNaN(d) ? iso : d.toLocaleDateString(undefined, { month: "short", year: "numeric" });
   }
 
+  // The API returns huff_risk (higher = weaker). We show a quality score instead (higher = sturdier).
+  function quality(risk) {
+    return risk == null ? null : 100 - risk;
+  }
+
+  function fmtRent(rent) {
+    const usd = (n) => "$" + Math.round(n).toLocaleString("en-US");
+    return (rent.low === rent.high ? usd(rent.low) : `${usd(rent.low)}–${usd(rent.high)}`) + "/mo";
+  }
+
   function signed(n) {
     const v = Math.round(n * 10) / 10;
     return (v > 0 ? "+" : "") + v;
@@ -80,17 +98,44 @@
     const url = new URL(location.href);
     url.search = "";
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-    if (url.href !== location.href) history.pushState({}, "", url);
+    if (url.href !== location.href) history.pushState({ inApp: true }, "", url);
   }
 
   // ---------- wolf drawings ----------
 
+  const WOLF_IMG = { idle: "/static/img/wolf-idle.webp", inhale: "/static/img/wolf-inhale.webp", blow: "/static/img/wolf-blow.webp" };
+
+  // Small wolves on the home, loading and message screens. Slots with class "inhaling" get the inhale pose.
   function mountWolves() {
-    const tpl = $("#wolf-template");
-    document.querySelectorAll("[data-wolf]").forEach((slot) => slot.append(tpl.content.cloneNode(true)));
-    const sceneWolf = $("#scene-wolf");
-    const svg = tpl.content.querySelector("svg").cloneNode(true);
-    sceneWolf.append(...svg.childNodes);
+    document.querySelectorAll("[data-wolf]").forEach((slot) => {
+      const pose = slot.classList.contains("inhaling") ? "inhale" : "idle";
+      slot.append(el("img", { class: "wolf", src: WOLF_IMG[pose], alt: "", decoding: "async" }));
+    });
+    const portrait = $(".wolf-slot.portrait");
+    if (portrait) portrait.addEventListener("click", () => huffAtPicks(portrait));
+    // Warm the cache so pose swaps in the scene don't flash empty.
+    Object.values(WOLF_IMG).forEach((src) => { new Image().src = src; });
+  }
+
+  // Easter egg: click the home wolf and he blows on the quick-pick buttons.
+  let huffing = false;
+  function huffAtPicks(slot) {
+    if (huffing) return;
+    huffing = true;
+    const img = slot.querySelector(".wolf");
+    const picks = $("#quick-picks");
+    img.src = WOLF_IMG.inhale;
+    setTimeout(() => {
+      img.src = WOLF_IMG.blow;
+      slot.classList.add("huff");
+      picks.classList.add("gusted");
+    }, 450);
+    setTimeout(() => {
+      img.src = WOLF_IMG.idle;
+      slot.classList.remove("huff");
+      picks.classList.remove("gusted");
+      huffing = false;
+    }, 1250);
   }
 
   // ---------- search + autocomplete ----------
@@ -104,7 +149,7 @@
     try {
       const { candidates } = await api("/api/search?q=" + encodeURIComponent(q));
       if (!candidates.length) {
-        showMessage("I sniffed all over Austin and found nothing by that name.", "Try the name as it appears on Google Maps.");
+        showMessage("I sniffed all over Austin and found no homes by that name.", "I only inspect apartments, condos and other places people live in Austin. Try the name as it appears on Google Maps.");
         return;
       }
       renderCandidates(candidates);
@@ -247,7 +292,10 @@
     $("#r-sample").textContent =
       `Based on ${d.sample.reviews_used} reviews written ${fmtDate(d.sample.oldest)} – ${fmtDate(d.sample.newest)}.` +
       (d.cached ? " Served fresh from the wolf's den (cached)." : "");
-    $("#meter").setAttribute("aria-valuenow", d.huff_risk);
+    const rent = d.place.rent;
+    $("#r-rent").hidden = !rent;
+    $("#r-rent").textContent = rent ? `💵 Rent: ${fmtRent(rent)}${rent.source ? ` (as listed on ${rent.source})` : ""}` : "";
+    $("#meter").setAttribute("aria-valuenow", quality(d.huff_risk));
 
     renderThemes(d.themes);
     renderWhy(d);
@@ -305,8 +353,8 @@
             el("thead", {}, el("tr", {}, el("th", { text: "Phrase reviewers used" }), el("th", { class: "num", text: "Reviews" }), el("th", { class: "num", text: "Weight" }), el("th", { class: "num", text: "Impact" }))),
             el("tbody", {}, rows))
         : el("p", { text: "No checklist phrases matched." }),
-      el("p", { text: parts.map(([k, v]) => `${k} ${k === "Starting point" ? v : signed(v)}`).join(" · ") + ` → ${d.huff_risk}/100 (clamped to 0–100).` }),
-      el("p", { text: "Thresholds: under 35 is brick, 35–65 is sticks, over 65 is straw." })
+      el("p", { text: parts.map(([k, v]) => `${k} ${k === "Starting point" ? v : signed(v)}`).join(" · ") + ` → risk ${d.huff_risk}/100 (clamped to 0–100). Quality score = 100 − risk = ${quality(d.huff_risk)}/100.` }),
+      el("p", { text: "Thresholds: quality over 65 is brick, 35–65 is sticks, under 35 is straw." })
     );
   }
 
@@ -335,16 +383,19 @@
     void scene.getBoundingClientRect(); // restart CSS animations
 
     const target = $("#house-" + verdict);
-    scene.classList.add("has-target", "inhaling-scene");
+    scene.classList.add("has-target");
     if (target) target.classList.add("target");
 
-    later(1400, () => {
+    // Wolf: idle (sizing up the house) -> inhale -> blow -> back to idle.
+    const IDLE = 900, INHALE = 1400;
+    later(IDLE, () => scene.classList.add("inhaling-scene"));
+    later(IDLE + INHALE, () => {
       scene.classList.remove("inhaling-scene");
       scene.classList.add("blowing");
       if (target) target.classList.add("shake");
       fillMeter(risk);
     });
-    later(2500, () => {
+    later(IDLE + 2500, () => {
       if (target) {
         target.classList.remove("shake");
         if (verdict === "brick") target.classList.add("stand");
@@ -352,6 +403,8 @@
       }
       stamp.classList.add("show", verdict);
     });
+    // Gust is over: back to the smug idle pose.
+    later(IDLE + 3200, () => scene.classList.remove("blowing"));
   }
 
   // ---------- crumbling houses ----------
@@ -486,7 +539,7 @@
     const duration = 1600;
     const step = (now) => {
       const t = Math.min(1, (now - start) / duration);
-      $("#meter-number").textContent = Math.round(risk * (1 - Math.pow(1 - t, 3)));
+      $("#meter-number").textContent = Math.round(sturdy * (1 - Math.pow(1 - t, 3)));
       if (t < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -497,7 +550,7 @@
   async function share() {
     if (!current) return;
     const url = `${location.origin}/?id=${encodeURIComponent(current.data_id)}`;
-    const text = `The Big Bad Wolf inspected ${current.place.title}: ${VERDICT_WORD[current.verdict] || "?"} (${current.huff_risk}/100). Satire!`;
+    const text = `The Big Bad Wolf inspected ${current.place.title}: ${VERDICT_WORD[current.verdict] || "?"} (${quality(current.huff_risk)}/100). Satire!`;
     try {
       await navigator.clipboard.writeText(url);
       toast("Link copied. Spread the howl.");
@@ -528,6 +581,7 @@
   }
 
   function renderList() {
+    refreshMapHearts();
     const items = myList();
     const count = $("#list-count");
     count.hidden = items.length === 0;
@@ -536,11 +590,11 @@
     $("#list-items").replaceChildren(
       ...items.map((it) =>
         el("li", { class: "list-item" },
-          el("button", { class: "open", type: "button", onclick: () => { closeListOnSmallScreens(); inspect(it.data_id); } },
+          el("button", { class: "open", type: "button", onclick: () => { setListOpen(false); inspect(it.data_id); } },
             el("span", { class: "house-icon", "aria-hidden": "true", text: HOUSE_ICON[it.verdict] || "🏠" }),
             el("span", { class: "info" },
               el("strong", { text: it.title }),
-              el("small", { text: it.huff_risk != null ? `${VERDICT_WORD[it.verdict]} · ${it.huff_risk}/100` : "Not enough data" })
+              el("small", { text: it.huff_risk != null ? `${VERDICT_WORD[it.verdict]} · ${quality(it.huff_risk)}/100` : "Not enough data" })
             )
           ),
           el("button", { class: "remove", type: "button", "aria-label": `Remove ${it.title} from My List`, text: "×",
@@ -581,6 +635,10 @@
       return;
     }
     writeList([...items, { data_id: current.data_id, title: current.place.title, verdict: current.verdict, huff_risk: current.huff_risk }]);
+    const btn = $("#btn-list");
+    btn.classList.remove("pop");
+    void btn.offsetWidth;
+    btn.classList.add("pop");
     const count = $("#list-count");
     count.classList.remove("bump");
     void count.offsetWidth;
@@ -589,40 +647,247 @@
   }
 
   function setListOpen(open) {
-    $("#my-list").hidden = !open;
+    $("#my-list").classList.toggle("open", open); // CSS slides it in/out
     const toggle = $("#list-toggle");
     toggle.setAttribute("aria-expanded", String(open));
     toggle.setAttribute("aria-label", open ? "Close My List" : "Open My List");
+    toggle.hidden = open; // the panel sits where the button is, so hide the button while it's open
     if (open) $("#list-close").focus();
   }
 
-  function closeListOnSmallScreens() {
-    if (window.matchMedia("(max-width: 940px)").matches) setListOpen(false);
-  }
+  let compareResults = [];
 
   async function runCompare(ids, { push = true } = {}) {
     if (push) setUrl({ compare: ids.join(",") });
     startLoading(["Taking the biggest breath of my life…", "Huffing at every door on the block…", ...LOADING_LINES.slice(1)]);
     try {
-      const { results, survivor } = await api("/api/compare?ids=" + encodeURIComponent(ids.join(",")));
-      $("#compare-list").replaceChildren(
-        ...results.map((r) => {
-          if (r.error) {
-            return el("div", { class: "compare-card" }, el("div", { class: "house-icon", text: "❓" }), el("p", { text: r.error }));
-          }
-          const isSurvivor = r.data_id === survivor;
-          return el("button", { class: "compare-card" + (isSurvivor ? " survivor" : ""), type: "button", onclick: () => inspect(r.data_id) },
-            el("div", { class: "house-icon", text: HOUSE_ICON[r.verdict] || "🏠" }),
-            el("h4", { text: r.place.title }),
-            el("div", { class: "risk", text: r.huff_risk != null ? `${r.huff_risk}/100` : "Not enough data" }),
-            el("p", { text: VERDICT_WORD[r.verdict] || "The trail went cold" }),
-            isSurvivor ? el("p", { class: "crown", text: "👑 This little pig survives" }) : null
-          );
-        })
-      );
+      ({ results: compareResults } = await api("/api/compare?ids=" + encodeURIComponent(ids.join(","))));
+      renderCompare();
       show("compare");
     } catch (err) {
       showMessage("Too much huffing at once. Even wolves get winded.", err.message);
+    }
+  }
+
+  function renderCompare() {
+    const filter = readRentFilter($("#cmp-rent-filter"));
+    const visible = compareResults.filter((r) => rentMatches(r.place && r.place.rent, filter));
+    // Same rule as the server: the lowest risk survives. Re-picked among the homes the filter leaves.
+    const scored = visible.filter((r) => !r.error && r.huff_risk != null);
+    const survivor = scored.length
+      ? scored.reduce((a, b) => (b.huff_risk < a.huff_risk || (b.huff_risk === a.huff_risk && b.data_id < a.data_id) ? b : a)).data_id
+      : null;
+    $("#compare-list").replaceChildren(
+      ...visible.map((r) => {
+        if (r.error) {
+          return el("div", { class: "compare-card" }, el("div", { class: "house-icon", text: "❓" }), el("p", { text: r.error }));
+        }
+        const isSurvivor = r.data_id === survivor;
+        const rent = r.place.rent;
+        return el("button", { class: "compare-card" + (isSurvivor ? " survivor" : ""), type: "button", onclick: () => inspect(r.data_id) },
+          el("div", { class: "house-icon", text: HOUSE_ICON[r.verdict] || "🏠" }),
+          el("h4", { text: r.place.title }),
+          el("div", { class: "risk", text: r.huff_risk != null ? `${quality(r.huff_risk)}/100` : "Not enough data" }),
+          el("p", { text: VERDICT_WORD[r.verdict] || "The trail went cold" }),
+          el("p", { class: "rent", text: rent ? `💵 ${fmtRent(rent)}` : "💵 Rent unknown" }),
+          isSurvivor ? el("p", { class: "crown", text: "👑 This house stays standing" }) : null
+        );
+      })
+    );
+    const active = filter.min != null || filter.max != null;
+    $("#cmp-rent-count").textContent = active ? `Showing ${visible.length} of ${compareResults.length} homes` : "";
+    if (active && !visible.length) {
+      $("#compare-list").append(el("p", { class: "sub compare-empty", text: "No homes on your list fit that rent. Try a wider range." }));
+    }
+  }
+
+  // ---------- neighborhood map ----------
+
+  const LEAFLET_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+  const LEAFLET_JS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+  const WEST_CAMPUS = [30.2862, -97.747];
+
+  // Tiny versions of the three houses from the scene (32x32).
+  const PIN_SVG = {
+    straw: `<svg viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="8" y="15" width="16" height="13" fill="var(--straw)" stroke="var(--ink)" stroke-width="1.6"/>
+      <path d="M11 17v9M14 16v10M18 16v10M21 17v9" stroke="var(--straw-dark)" stroke-width="1"/>
+      <path d="M4 17 L16 5 L28 17 Z" fill="var(--straw-dark)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="14" y="21" width="5" height="7" rx="2.5" fill="var(--door)" stroke="var(--ink)" stroke-width="1"/></svg>`,
+    sticks: `<svg viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="7" y="14" width="18" height="14" fill="var(--sticks)" stroke="var(--ink)" stroke-width="1.6"/>
+      <path d="M10 14v14M13 14v14M19 14v14M22 14v14" stroke="var(--sticks-dark)" stroke-width="1.4"/>
+      <path d="M4 15 L16 5 L28 15 Z" fill="var(--sticks-dark)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="14" y="21" width="5" height="7" fill="var(--door)" stroke="var(--ink)" stroke-width="1"/></svg>`,
+    brick: `<svg viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="6" y="13" width="20" height="15" fill="var(--brick)" stroke="var(--ink)" stroke-width="1.6"/>
+      <path d="M6 18h20M6 23h20M11 13v5M21 13v5M16 18v5M11 23v5M21 23v5" stroke="var(--mortar)" stroke-width="1"/>
+      <rect x="20" y="4" width="4" height="7" fill="var(--brick)" stroke="var(--ink)" stroke-width="1.2"/>
+      <path d="M3 14 L16 4 L29 14 Z" fill="var(--roof)" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round"/>
+      <rect x="13.5" y="20" width="5" height="8" fill="var(--door)" stroke="var(--ink)" stroke-width="1"/></svg>`,
+  };
+
+  let leafletLoading = null;
+  let mapState = null; // { map, layer, markers: Map<data_id, marker> }
+
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve();
+    if (!leafletLoading) {
+      leafletLoading = new Promise((resolve, reject) => {
+        document.head.append(el("link", { rel: "stylesheet", href: LEAFLET_CSS }));
+        const script = el("script", { src: LEAFLET_JS });
+        script.onload = resolve;
+        script.onerror = () => { leafletLoading = null; reject(new Error("The map paper blew away. Try again in a moment.")); };
+        document.head.append(script);
+      });
+    }
+    return leafletLoading;
+  }
+
+  function mapStatus(text) {
+    $("#map-status").hidden = !text;
+    $("#map-status").textContent = text || "";
+  }
+
+  function ensureMap(tileUrl) {
+    if (mapState) return mapState;
+    const map = L.map("map-canvas", { scrollWheelZoom: false, zoomControl: true }).setView(WEST_CAMPUS, 15);
+    L.tileLayer(tileUrl, {
+      maxZoom: 19,
+      subdomains: "abcd",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    }).addTo(map);
+    mapState = { map, layer: L.layerGroup().addTo(map), markers: new Map() };
+    return mapState;
+  }
+
+  function popupFor(b) {
+    return el("div", { class: "map-popup" },
+      el("strong", { text: b.title }),
+      el("p", { class: "verdict", text: `${HOUSE_ICON[b.verdict]} ${VERDICT_WORD[b.verdict]} · ${quality(b.huff_risk)}/100` }),
+      el("p", { class: "rent", text: b.rent ? `💵 ${fmtRent(b.rent)}` : "💵 Rent unknown" }),
+      el("button", { class: "btn btn-small", type: "button", text: "Read the inspection", onclick: () => inspect(b.data_id) })
+    );
+  }
+
+  // Small heart badge for homes on My List (same heart as the list icon).
+  const PIN_HEART = `<svg class="pin-heart" viewBox="13.5 21 21 17" aria-hidden="true">
+    <path d="M24 37 C 15.5 31, 14.5 26.5, 17 23.8 C 19.6 21, 23 22.4, 24 25.2 C 25 22.4, 28.4 21, 31 23.8 C 33.5 26.5, 32.5 31, 24 37 Z"
+          fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+
+  function pinIcon(b, onList) {
+    return L.divIcon({
+      className: "house-pin",
+      html: PIN_SVG[b.verdict] + (onList ? PIN_HEART : ""),
+      iconSize: [30, 30], iconAnchor: [15, 28], popupAnchor: [0, -26],
+    });
+  }
+
+  // Re-draw pins so hearts match My List (called whenever the list changes).
+  function refreshMapHearts() {
+    if (!mapState) return;
+    const ids = new Set(myList().map((x) => x.data_id));
+    for (const [id, marker] of mapState.markers) marker.setIcon(pinIcon(marker.building, ids.has(id)));
+  }
+
+  // ---- rent filter ----
+
+  // Works for any rent filter form (map or compare page): fields named min, max, unknown.
+  function readRentFilter(form) {
+    const num = (name) => {
+      const v = form.elements[name].value.trim();
+      return v === "" || isNaN(+v) ? null : Math.max(0, +v);
+    };
+    return { min: num("min"), max: num("max"), unknown: form.elements.unknown.checked };
+  }
+
+  function clearRentForm(form) {
+    form.elements.min.value = "";
+    form.elements.max.value = "";
+    form.elements.unknown.checked = true;
+  }
+
+  function rentMatches(rent, { min, max, unknown }) {
+    if (min == null && max == null) return true;
+    if (!rent) return unknown;
+    // Show a home if any part of its rent range falls inside the chosen range.
+    return (min == null || rent.high >= min) && (max == null || rent.low <= max);
+  }
+
+  function applyMapFilter() {
+    if (!mapState) return;
+    const filter = readRentFilter($("#rent-filter"));
+    let shown = 0;
+    for (const [id, marker] of mapState.markers) {
+      const keep = rentMatches(marker.building.rent, filter) || id === mapState.focusId;
+      if (keep) { shown += 1; if (!mapState.layer.hasLayer(marker)) mapState.layer.addLayer(marker); }
+      else mapState.layer.removeLayer(marker);
+    }
+    const total = mapState.markers.size;
+    const active = filter.min != null || filter.max != null;
+    $("#rent-count").textContent = active && total ? `Showing ${shown} of ${total} homes` : "";
+  }
+
+  function clearRentFilter() {
+    clearRentForm($("#rent-filter"));
+    applyMapFilter();
+  }
+
+  async function openMap(focusId = null, { push = true } = {}) {
+    if (push) setUrl({ map: "1" });
+    document.title = "Neighborhood map · Big Bad Wolf Inspection Agency";
+    show("map");
+    mapStatus("Unrolling the map…");
+    let buildings, tileUrl;
+    try {
+      [, { buildings, tile_url: tileUrl }] = await Promise.all([loadLeaflet(), api("/api/map")]);
+    } catch (err) {
+      mapStatus(err.message);
+      return;
+    }
+    const { map, layer, markers } = ensureMap(tileUrl);
+    map.invalidateSize(); // the section was hidden when Leaflet first measured it
+    layer.clearLayers();
+    markers.clear();
+    const listIds = new Set(myList().map((x) => x.data_id));
+    for (const b of buildings) {
+      const onList = listIds.has(b.data_id);
+      const marker = L.marker([b.lat, b.lng], {
+        icon: pinIcon(b, onList),
+        title: b.title,
+        alt: `${b.title}: ${VERDICT_WORD[b.verdict]}${onList ? " (on My List)" : ""}`,
+      })
+        .bindPopup(() => popupFor(b))
+        .addTo(layer);
+      marker.building = b;
+      markers.set(b.data_id, marker);
+    }
+    mapState.focusId = focusId; // the home you came from stays visible even if the rent filter would hide it
+    applyMapFilter();
+
+    const focus = focusId && markers.get(focusId);
+    if (focus) {
+      map.setView(focus.getLatLng(), 17);
+      focus.openPopup();
+    } else if (buildings.length) {
+      map.fitBounds(L.latLngBounds(buildings.map((b) => [b.lat, b.lng])), { padding: [30, 30], maxZoom: 16 });
+    } else {
+      map.setView(WEST_CAMPUS, 15);
+    }
+    mapStatus(
+      !buildings.length ? "No homes on the map yet. Inspect one and it will move in here."
+        : focusId && !focus ? "This home isn't on the map yet. Find it through search to pin it."
+        : ""
+    );
+  }
+
+  async function shareMap() {
+    const url = `${location.origin}/?map=1`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("Map link copied. Show everyone the straw huts.");
+    } catch {
+      window.prompt("Copy this link:", url);
     }
   }
 
@@ -632,6 +897,7 @@
     const params = new URLSearchParams(location.search);
     clearTimers();
     if (params.get("id")) return inspect(params.get("id"), { push: false });
+    if (params.get("map")) return openMap(null, { push: false });
     if (params.get("compare")) return runCompare(params.get("compare").split(",").filter(Boolean).slice(0, LIST_MAX), { push: false });
     document.title = "Big Bad Wolf Inspection Agency";
     show("home");
@@ -655,17 +921,28 @@
   $("#q").addEventListener("blur", () => setTimeout(hideSuggestions, 150));
   $("#btn-share").addEventListener("click", share);
   $("#btn-list").addEventListener("click", toggleCurrentInList);
-  $("#list-toggle").addEventListener("click", () => setListOpen($("#my-list").hidden));
+  $("#list-toggle").addEventListener("click", () => setListOpen(!$("#my-list").classList.contains("open")));
   $("#list-close").addEventListener("click", () => { setListOpen(false); $("#list-toggle").focus(); });
   $("#list-compare").addEventListener("click", () => {
-    closeListOnSmallScreens();
+    setListOpen(false);
     runCompare(myList().map((x) => x.data_id));
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !$("#my-list").hidden) { setListOpen(false); $("#list-toggle").focus(); }
+    if (e.key === "Escape" && $("#my-list").classList.contains("open")) { setListOpen(false); $("#list-toggle").focus(); }
   });
   $("#message-back").addEventListener("click", goHome);
   $("#compare-back").addEventListener("click", goHome);
+  $("#btn-map-home").addEventListener("click", () => openMap());
+  $("#btn-map").addEventListener("click", () => current && openMap(current.data_id));
+  $("#map-share").addEventListener("click", shareMap);
+  $("#rent-filter").addEventListener("input", applyMapFilter);
+  $("#rent-filter").addEventListener("submit", (e) => e.preventDefault());
+  $("#rent-clear").addEventListener("click", clearRentFilter);
+  $("#cmp-rent-filter").addEventListener("input", renderCompare);
+  $("#cmp-rent-filter").addEventListener("submit", (e) => e.preventDefault());
+  $("#cmp-rent-clear").addEventListener("click", () => { clearRentForm($("#cmp-rent-filter")); renderCompare(); });
+  // Go back to wherever the map was opened from; visitors who arrived on a shared map link go home instead.
+  $("#map-back").addEventListener("click", () => (history.state && history.state.inApp ? history.back() : goHome()));
   window.addEventListener("popstate", route);
   renderList();
   route();

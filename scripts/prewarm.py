@@ -4,8 +4,8 @@ Usage:
     python scripts/prewarm.py                 # every building in data/prewarm.json
     python scripts/prewarm.py "26 West" ...   # just these
 
-Each new building costs about 9 SerpApi searches the first time
-(1 maps search + 3 review pages + 5 keyword probes). After that it is cached
+Each new building costs about 10 SerpApi searches the first time
+(1 maps search + 3 review pages + 5 keyword probes + 1 rent search). After that it is cached
 in cache.sqlite3 and costs nothing.
 """
 

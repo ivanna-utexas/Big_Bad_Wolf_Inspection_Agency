@@ -20,9 +20,11 @@ BASE_URL = "https://serpapi.com/search.json"
 # Fields we actually read; json_restrictor trims everything else off the payload.
 RESTRICT = {
     "google_maps": (
-        "local_results[0:3].{title,data_id,place_id,rating,reviews,address,type,gps_coordinates,thumbnail},"
-        "place_results.{title,data_id,place_id,rating,reviews,address,type,gps_coordinates,thumbnail},error"
+        # Keep 10 so there are still a few left after non-Austin / non-residential places are filtered out.
+        "local_results[0:10].{title,data_id,place_id,rating,reviews,address,type,types,gps_coordinates,thumbnail},"
+        "place_results.{title,data_id,place_id,rating,reviews,address,type,types,gps_coordinates,thumbnail},error"
     ),
+    "google": "organic_results[0:10].{title,snippet,source,displayed_link,rich_snippet},error",
     "google_maps_reviews": (
         # Keep `reviews` whole: sub-selecting its fields made SerpApi drop the list entirely.
         "place_info,topics,reviews,serpapi_pagination,error"
@@ -133,6 +135,10 @@ class SerpApiClient:
         if query:
             params["query"] = query
         return self.get(params)
+
+    def rent_search(self, query: str) -> tuple[dict, bool]:
+        # Plain Google search: listing sites (Apartments.com, Redfin...) show rent ranges in their results.
+        return self.get({"engine": "google", "q": query, "hl": "en", "gl": "us"})
 
     def autocomplete(self, query: str) -> tuple[dict, bool]:
         return self.get(

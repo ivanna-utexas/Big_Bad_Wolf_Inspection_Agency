@@ -32,11 +32,15 @@ def fake_serpapi(calls: list):
             if p["q"].startswith("nothing"):
                 return httpx.Response(200, json={"error": "Google hasn't returned any results for this query."})
             return httpx.Response(200, json={"local_results": [
-                {"title": "Good Place", "data_id": GOOD_ID, "place_id": "ChIJgood", "rating": 4.6, "reviews": 120, "address": "1 Rio St", "thumbnail": "t.jpg"},
-                {"title": "Bad Place", "data_id": BAD_ID, "rating": 2.1, "reviews": 300, "address": "2 Rio St"},
-                {"title": "No id"},
-                {"title": "Tiny Place", "data_id": TINY_ID, "rating": 5, "reviews": 3},
-                {"title": "Fourth", "data_id": "0x1:0x4"},
+                {"title": "Good Place", "data_id": GOOD_ID, "place_id": "ChIJgood", "rating": 4.6, "reviews": 120, "address": "1 Rio St, Austin, TX", "thumbnail": "t.jpg", "type": "Apartment complex"},
+                {"title": "Coffee Spot", "data_id": "0x1:0x5", "address": "3 Rio St, Austin, TX", "type": "Coffee shop"},
+                {"title": "Bad Place", "data_id": BAD_ID, "rating": 2.1, "reviews": 300, "address": "2 Rio St", "type": "Student housing center",
+                 "gps_coordinates": {"latitude": 30.29, "longitude": -97.74}},
+                {"title": "Dallas Lofts", "data_id": "0x1:0x6", "type": "Apartment building",
+                 "gps_coordinates": {"latitude": 32.78, "longitude": -96.80}},
+                {"title": "No id", "type": "Apartment complex", "address": "Austin, TX"},
+                {"title": "Tiny Place", "data_id": TINY_ID, "rating": 5, "reviews": 3, "address": "Austin, TX", "types": ["Condominium complex"]},
+                {"title": "Fourth", "data_id": "0x1:0x4", "address": "Austin, TX", "type": "Apartment complex"},
             ]})
         if engine == "google_maps_reviews":
             did = p["data_id"]
@@ -55,8 +59,16 @@ def fake_serpapi(calls: list):
                 "reviews": reviews[:8],
                 "serpapi_pagination": {"next_page_token": "tok"},
             })
+        if engine == "google":
+            if "Good Place" not in p["q"]:
+                return httpx.Response(200, json={"organic_results": []})
+            return httpx.Response(200, json={"organic_results": [
+                {"title": "Average rent in Austin", "source": "RentHop", "snippet": "Austin rentals average $1,285 to $2,995."},
+                {"title": "Good Place - 1 Rio St Austin, TX", "source": "Apartments.com", "snippet": "Rent from $800/mo.",
+                 "rich_snippet": {"top": {"detected_extensions": {"price_from": 800.0, "price_to": 1650.0}}}},
+            ]})
         if engine == "google_maps_autocomplete":
-            return httpx.Response(200, json={"suggestions": [{"value": "Castilian", "subtext": "Austin, TX"}, {"subtext": "no value"}]})
+            return httpx.Response(200, json={"suggestions": [{"value": "Castilian", "subtext": "Austin, TX"}, {"value": "Castilian Dallas", "subtext": "Dallas, TX"}, {"subtext": "no value"}]})
         return httpx.Response(400, json={"error": "unknown"})
 
     return httpx.MockTransport(handler)
@@ -235,3 +247,64 @@ def test_compare_limits(setup):
     assert api.get("/api/compare", params={"ids": GOOD_ID}).status_code == 400
     too_many = ",".join(f"0x1:0x{i}" for i in range(11))
     assert api.get("/api/compare", params={"ids": too_many}).status_code == 400
+
+
+def test_map_shows_inspected_homes_with_coordinates(setup):
+    api, _ = setup
+    empty = api.get("/api/map").json()
+    assert empty["buildings"] == [] and "{z}" in empty["tile_url"]
+    api.get("/api/search", params={"q": "castilian"})
+    api.get("/api/inspect", params={"data_id": BAD_ID})
+    api.get("/api/inspect", params={"data_id": GOOD_ID})  # no GPS from search -> not pinned
+    buildings = api.get("/api/map").json()["buildings"]
+    assert [b["data_id"] for b in buildings] == [BAD_ID]
+    bad = buildings[0]
+    assert (bad["lat"], bad["lng"]) == (30.29, -97.74)
+    assert bad["verdict"] == "straw" and bad["title"] == "Bad Place"
+
+
+def test_exact_match_with_list_type_is_kept():
+    # Google's single exact match (place_results) gives `type` as a list, not a string.
+    from app.pipeline import _candidate
+
+    item = {"title": "Villas on Rio", "data_id": "0x1:0x7", "type": ["Apartment complex"],
+            "address": "2111 Rio Grande St, Austin, TX 78705", "gps_coordinates": {"latitude": 30.285, "longitude": -97.7448}}
+    c = _candidate(item)
+    assert c is not None and c["type"] == "Apartment complex"
+
+
+@pytest.mark.parametrize("title,type_,kept", [
+    ("Jester West Dormitory", ["Building"], True),
+    ("San Jacinto Residence Hall", "University department", True),
+    ("Kinsolving Residence Hall", ["Student dormitory"], True),
+    ("Robert A. Welch Hall", "Academic department", False),
+    ("Kins Dining", "Restaurant", False),
+])
+def test_dorms_and_residence_halls_are_kept(title, type_, kept):
+    from app.pipeline import _candidate
+
+    item = {"title": title, "data_id": "0x1:0x8", "type": type_, "address": "Austin, TX"}
+    assert (_candidate(item) is not None) == kept
+
+
+def test_inspect_includes_rent_range(setup):
+    api, calls = setup
+    api.get("/api/search", params={"q": "castilian"})
+    body = api.get("/api/inspect", params={"data_id": GOOD_ID}).json()
+    # The generic "average rent in Austin" result is ignored; only the building's own listing counts.
+    assert body["place"]["rent"] == {"low": 800, "high": 1650, "source": "Apartments.com"}
+    assert any(c["engine"] == "google" and c["q"] == '"Good Place" Austin TX rent' for c in calls)
+    assert api.get("/api/inspect", params={"data_id": BAD_ID}).json()["place"]["rent"] is None
+
+
+def test_parse_rent_from_snippets():
+    from app.pipeline import parse_rent
+
+    data = {"organic_results": [
+        {"source": "Facebook · The Castilian Residence Hall", "title": "Floor plans",
+         "snippet": "Rates as low as $1,199! 565 Sq.Ft. / $775+ and $500 off your first month. $75 app fee."},
+        {"source": "UT Austin", "title": "Castilian rates", "snippet": "Rate per person $14,465 per year"},
+        {"source": "ApartmentAdvisor", "title": "Average rent in Austin", "snippet": "1-bedroom $1,200."},
+    ]}
+    assert parse_rent(data, "The Castilian") == {"low": 775, "high": 1199, "source": "Facebook"}
+    assert parse_rent({"organic_results": []}, "The Castilian") is None

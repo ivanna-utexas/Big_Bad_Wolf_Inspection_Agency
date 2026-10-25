@@ -36,6 +36,13 @@ class Cache:
             row = self._conn.execute("SELECT value FROM kv WHERE key = ?", (key,)).fetchone()
         return json.loads(row[0]) if row else None
 
+    def scan(self, prefix: str) -> list[Any]:
+        """Every value whose key starts with `prefix`."""
+        pattern = prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        with self._lock:
+            rows = self._conn.execute("SELECT value FROM kv WHERE key LIKE ? ESCAPE '\\'", (pattern,)).fetchall()
+        return [json.loads(r[0]) for r in rows]
+
     def set(self, key: str, value: Any) -> None:
         with self._lock:
             self._conn.execute(

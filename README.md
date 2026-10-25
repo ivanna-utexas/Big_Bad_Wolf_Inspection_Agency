@@ -35,6 +35,7 @@ Run the tests:
 | `SERPAPI_API_KEY` | yes | SerpApi key. Read only by the backend; never sent to the browser or written to logs. |
 | `GEMINI_API_KEY` | no | Gemini key for the wolf's lines. Without it, the wolf uses canned lines. |
 | `GEMINI_MODEL` | no | Comma-separated models; the retry moves to the next one. Defaults to `gemini-3-flash-preview,gemini-3.8-flash` (`gemini-2.5-flash` is closed to new keys). |
+| `BBW_MAP_TILE_URL` | no | Map background tile URL for the neighborhood map, e.g. your CARTO URL with its key. Must contain `{z}`, `{x}`, `{y}`. Sent to the browser, so the key is public; restrict it to your domain in CARTO. Without it, CARTO's tiles show "API key required". |
 | `BBW_CACHE_PATH` | no | SQLite cache file. Defaults to `cache.sqlite3` in the repo root. |
 | `BBW_AUTOCOMPLETE` | no | `0` turns off search-box suggestions (each suggestion lookup is a SerpApi search). |
 | `BBW_JSON_RESTRICTOR` | no | `0` asks SerpApi for full payloads instead of trimmed ones. |
@@ -49,20 +50,21 @@ Judges will mostly try the same famous West Campus buildings. Warm them up so th
 .venv/bin/python scripts/prewarm.py "The Castilian"    # or specific names
 ```
 
-Edit `data/prewarm.json` to change the list. Each new building costs about 9 SerpApi searches once, then it's cached forever in `cache.sqlite3`. The script prints a share link (`/?id=...`) for each building. Check that each name matched the right building.
+Edit `data/prewarm.json` to change the list. Each new building costs about 10 SerpApi searches once, then it's cached forever in `cache.sqlite3`. The script prints a share link (`/?id=...`) for each building. Check that each name matched the right building.
 
 ## How SerpApi is used
 
 Three SerpApi engines, all called from the backend:
 
-1. **`google_maps`** (`type=search`, `q="<name> Austin TX"`): finds the building. We return the top 3 `local_results` so the user confirms the right one. A single exact match (`place_results`) is handled too.
+1. **`google_maps`** (`type=search`, `q="<name> Austin TX"`): finds the building. We drop anything outside Austin (GPS box, or "Austin" in the address) or not residential (place type mentions apartment, condo, housing, dorm, townhouse, etc.) and return the top 3 remaining `local_results` so the user confirms the right one. A single exact match (`place_results`) is handled too.
 2. **`google_maps_reviews`** with `data_id`, called several ways per building:
    - `sort_by=newestFirst`, 2 pages (paginated with `next_page_token`): a representative, current sample. Page one also gives `place_info` and `topics` (Google's keyword chips with mention counts), which feed the score.
    - `sort_by=ratingLow`, 1 page: the strongest complaints.
    - `query=<keyword>` probes for `mold`, `leak`, `roach`, `maintenance`, `deposit` (editable in `data/signals.json`): finds reviews that mention specific problems even if they aren't recent or low-rated.
-3. **`google_maps_autocomplete`**: search-box suggestions centered on West Campus.
+3. **`google_maps_autocomplete`**: search-box suggestions centered on West Campus, keeping only ones whose subtext mentions Austin.
+4. **`google`** (`q='"<name>" Austin TX rent'`): monthly rent range. Uses listing sites' structured price range (e.g. Apartments.com `price_from`/`price_to`), otherwise $300–$6,000 amounts from snippets that name the building. Generic "average rent in Austin" pages are ignored. Shown on the result page and used by the map's rent filter.
 
-`json_restrictor` trims every maps and reviews response down to the fields we read. Every response is cached in SQLite, keyed by engine + params (never the key), so repeats are free. Budget: about 9 searches per new building.
+`json_restrictor` trims every maps and reviews response down to the fields we read. Every response is cached in SQLite, keyed by engine + params (never the key), so repeats are free. Budget: about 10 searches per new building.
 
 Errors are handled at every step: SerpApi's `error` field, "no results" (treated as empty, not as a failure), HTTP 401/429, network failures, and junk payloads all become friendly wolf messages. If an optional page (ratingLow, a probe, page two) fails, the inspection continues without it.
 
@@ -73,6 +75,7 @@ Browser (frontend/: plain HTML + CSS + JS, inline SVG animation)
   │  GET /api/search?q=...          -> up to 3 candidate buildings
   │  GET /api/inspect?data_id=...   -> verdict payload
   │  GET /api/compare?ids=a,b,c     -> compare 2-10 homes from My List, who survives
+  │  GET /api/map                   -> every inspected home with GPS + verdict (neighborhood map, /?map=1)
   │  GET /api/autocomplete?q=...    -> suggestions
   ▼
 FastAPI (app/)

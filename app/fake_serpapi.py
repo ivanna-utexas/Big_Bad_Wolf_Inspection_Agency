@@ -71,7 +71,8 @@ def _handler(request: httpx.Request) -> httpx.Response:
     if engine == "google_maps":
         return httpx.Response(200, json={"local_results": [
             {"title": title, "data_id": did, "rating": rating, "reviews": 180 + i * 40,
-             "address": f"{2400 + i * 100} Rio Grande St, Austin, TX", "type": "Apartment complex"}
+             "address": f"{2400 + i * 100} Rio Grande St, Austin, TX", "type": "Apartment complex",
+             "gps_coordinates": {"latitude": 30.2866 + i * 0.0018, "longitude": -97.7452 - i * 0.0012}}
             for i, (did, (title, rating, _)) in enumerate(BUILDINGS.items())
         ]})
     if engine == "google_maps_autocomplete":
@@ -96,6 +97,16 @@ def _handler(request: httpx.Request) -> httpx.Response:
             "reviews": _reviews(did, 0, 8),
             "serpapi_pagination": {"next_page_token": "fake-token"},
         })
+    if engine == "google":  # rent lookup: one listing-site result per building, with a price range
+        for i, (title, _, _) in enumerate(BUILDINGS.values()):
+            if title in p.get("q", ""):
+                low, high = 750 + i * 350, 1400 + i * 500
+                return httpx.Response(200, json={"organic_results": [{
+                    "title": f"{title} - Rio Grande St Austin, TX", "source": "Apartments.com",
+                    "snippet": f"{title} has rent from ${low:,}/mo. to ${high:,}/mo.",
+                    "rich_snippet": {"top": {"detected_extensions": {"price_from": low, "price_to": high}}},
+                }]})
+        return httpx.Response(200, json={"organic_results": []})
     return httpx.Response(400, json={"error": "Unsupported engine in fake mode."})
 
 

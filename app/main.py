@@ -78,6 +78,13 @@ def create_app(inspector: Inspector | None = None) -> FastAPI:
     def compare(ids: str = Query("", max_length=1000)):
         return run(app.state.inspector.compare, ids.split(","))
 
+    @app.get("/api/map")
+    def neighborhood_map():
+        result = run(app.state.inspector.map)
+        if isinstance(result, dict):
+            result["tile_url"] = config.MAP_TILE_URL
+        return result
+
     @app.get("/api/health")
     def health():
         return {"ok": True, "serpapi_key": bool(config.SERPAPI_API_KEY), "fake_serpapi": config.FAKE_SERPAPI, "llm": bool(config.GEMINI_API_KEY)}

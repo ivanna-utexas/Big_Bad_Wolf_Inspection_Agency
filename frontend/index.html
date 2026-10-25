@@ -26,7 +26,7 @@
     <span id="list-count" class="list-count" hidden>0</span>
   </button>
 
-  <aside id="my-list" class="my-list" hidden aria-labelledby="my-list-title">
+  <aside id="my-list" class="my-list" aria-labelledby="my-list-title">
     <header class="my-list-head">
       <svg class="my-list-icon" aria-hidden="true"><use href="#heart-house"/></svg>
       <h2 id="my-list-title">My List</h2>
@@ -45,7 +45,7 @@
     <header class="masthead">
       <p class="badge-line">Est. once upon a time · Licensed to huff</p>
       <h1>Big Bad Wolf<br><span>Inspection Agency</span></h1>
-      <p class="tagline">Name a West Campus apartment. The wolf reads what reviewers say and tells you if it's brick, sticks, or straw.</p>
+      <p class="tagline">Name a residential space in Austin. The wolf reads what reviewers say and tells you if it's brick, sticks, or straw.</p>
     </header>
 
     <form id="search-form" class="search" autocomplete="off" role="search">
@@ -61,10 +61,11 @@
     <main id="view" aria-live="polite">
       <!-- Home -->
       <section id="home" class="panel intro">
-        <div class="wolf-slot" data-wolf></div>
+        <div class="wolf-slot portrait" data-wolf></div>
         <p class="wolf-says">"Little pigs, little pigs, let me read your reviews."</p>
         <p class="hint">Try one of these:</p>
         <div id="quick-picks" class="quick-picks"></div>
+        <button id="btn-map-home" class="btn map-cta" type="button">🗺️ See the neighborhood map</button>
       </section>
 
       <!-- Candidates -->
@@ -113,8 +114,8 @@
             </defs>
             <path class="hill" d="M0 250 Q160 228 320 244 T700 238 V280 H0Z"/>
 
-            <!-- straw (left) -->
-            <g class="house" id="house-straw" data-kind="straw">
+            <!-- straw (right, farthest from the wolf) -->
+            <g class="house" id="house-straw" data-kind="straw" transform="translate(506 0)">
               <g class="house-body">
                 <rect data-piece="wall" x="40" y="168" width="110" height="80" fill="var(--straw)" stroke="var(--ink)" stroke-width="3"/>
                 <path data-piece="wall" d="M50 178v62M64 176v66M78 178v64M92 176v66M106 178v62M120 176v66M134 178v64" stroke="var(--straw-dark)" stroke-width="2"/>
@@ -136,8 +137,8 @@
               </g>
             </g>
 
-            <!-- brick (shifted left) -->
-            <g class="house" id="house-brick" data-kind="brick" transform="translate(-356 0)">
+            <!-- brick (left, next to the wolf) -->
+            <g class="house" id="house-brick" data-kind="brick" transform="translate(-207 0)">
               <g class="house-body">
                 <rect data-piece="wall" x="386" y="150" width="130" height="98" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
                 <rect data-piece="roof" x="478" y="96" width="20" height="40" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
@@ -150,9 +151,9 @@
             <g id="debris" aria-hidden="true"></g>
 
             <!-- pigs sit in front of each house so they stay put when a house falls -->
-            <g class="pig" transform="translate(290 236)"><use href="#pig-shape"/></g>
-            <g class="pig" transform="translate(470 236)"><use href="#pig-shape"/></g>
-            <g class="pig" transform="translate(660 236)"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(290 236)" style="--d: 0s"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(470 236)" style="--d: -.6s"><use href="#pig-shape"/></g>
+            <g class="pig" transform="translate(660 236)" style="--d: -1.2s"><use href="#pig-shape"/></g>
             <defs>
               <g id="pig-shape">
                 <ellipse cx="0" cy="0" rx="15" ry="13" fill="var(--pig)" stroke="var(--ink)" stroke-width="2.5"/>
@@ -165,13 +166,19 @@
 
             <!-- wind -->
             <g class="wind" stroke="var(--wind)" stroke-width="4" stroke-linecap="round" fill="none">
-              <path d="M112 150 C 220 140, 280 160, 360 150"/>
-              <path d="M112 168 C 230 175, 320 160, 400 175 q 20 4 16 -8"/>
-              <path d="M112 186 C 210 200, 300 190, 370 200"/>
+              <!-- gusts start at the wolf's mouth in the blow pose (about 98, 114) and fan out toward the houses -->
+              <path d="M100 108 C 190 96, 280 126, 360 150"/>
+              <path d="M100 114 C 200 120, 310 152, 400 175 q 20 4 16 -8"/>
+              <path d="M100 120 C 180 142, 280 182, 370 200"/>
             </g>
 
             <!-- wolf -->
-            <g id="scene-wolf" class="scene-wolf" transform="translate(120 112) scale(-0.58 0.58)"></g>
+            <!-- wolf: one image per pose; the scene's class picks which one shows (see .scene-wolf in style.css) -->
+            <g id="scene-wolf" class="scene-wolf" aria-hidden="true">
+              <image class="pose-idle" href="/static/img/wolf-idle.webp" x="0" y="70" width="104" height="180"/>
+              <image class="pose-inhale" href="/static/img/wolf-inhale.webp" x="0" y="70" width="104" height="180"/>
+              <image class="pose-blow" href="/static/img/wolf-blow.webp" x="0" y="70" width="104" height="180"/>
+            </g>
           </svg>
           <p id="r-stamp" class="stamp" aria-hidden="true"></p>
         </div>
@@ -187,10 +194,12 @@
 
         <p id="r-verdict-line" class="verdict-line"></p>
         <p id="r-sample" class="sample"></p>
+        <p id="r-rent" class="rent-line" hidden></p>
 
         <div class="actions">
           <button id="btn-share" class="btn" type="button">🔗 Share</button>
           <button id="btn-list" class="btn" type="button" aria-pressed="false">♡ Add to list</button>
+          <button id="btn-map" class="btn" type="button">🗺️ On the map</button>
         </div>
 
         <h3 class="section-title">What reviewers say</h3>
@@ -208,9 +217,37 @@
       <!-- Compare -->
       <section id="compare" class="panel" hidden>
         <h2>Compare Locations</h2>
-        <p class="sub">The wolf huffs at every home on your list. Only one pig stays dry.</p>
+        <p class="sub">The wolf huffs at every home on your list. Only one will survive.</p>
+        <form id="cmp-rent-filter" class="rent-filter" aria-label="Filter compared homes by monthly rent">
+          <span class="rent-filter-title">💵 Monthly rent</span>
+          <label>from $<input name="min" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
+          <label>to $<input name="max" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
+          <label class="rent-unknown"><input name="unknown" type="checkbox" checked> include homes with unknown rent</label>
+          <button id="cmp-rent-clear" class="btn btn-small" type="button">Clear</button>
+          <span id="cmp-rent-count" class="rent-count" aria-live="polite"></span>
+        </form>
         <div id="compare-list" class="compare-list"></div>
         <button id="compare-back" class="btn" type="button">Back</button>
+      </section>
+
+      <!-- Neighborhood map -->
+      <section id="map" class="panel" hidden>
+        <h2>The Neighborhood</h2>
+        <p class="sub">Every Austin home the wolf has inspected. Tap a house to see how it held up.</p>
+        <form id="rent-filter" class="rent-filter" aria-label="Filter homes by monthly rent">
+          <span class="rent-filter-title">💵 Monthly rent</span>
+          <label>from $<input id="rent-min" name="min" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
+          <label>to $<input id="rent-max" name="max" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
+          <label class="rent-unknown"><input id="rent-unknown" name="unknown" type="checkbox" checked> include homes with unknown rent</label>
+          <button id="rent-clear" class="btn btn-small" type="button">Clear</button>
+          <span id="rent-count" class="rent-count" aria-live="polite"></span>
+        </form>
+        <div id="map-canvas" class="map-canvas" role="region" aria-label="Map of inspected homes"></div>
+        <p id="map-status" class="map-status" hidden></p>
+        <div class="actions">
+          <button id="map-share" class="btn" type="button">🔗 Share the map</button>
+          <button id="map-back" class="btn" type="button">Back</button>
+        </div>
       </section>
     </main>
 
@@ -224,34 +261,6 @@
 
   <div id="toast" class="toast" role="status" hidden></div>
 
-  <template id="wolf-template">
-    <svg class="wolf" viewBox="0 0 200 200" aria-hidden="true">
-      <g class="wolf-body">
-        <path d="M70 200 C 60 150, 80 120, 110 118 C 150 116, 170 150, 168 200 Z" fill="var(--wolf)" stroke="var(--ink)" stroke-width="4"/>
-        <path d="M95 200 C 98 170, 115 150, 140 160" fill="none" stroke="var(--wolf-light)" stroke-width="10" stroke-linecap="round"/>
-        <!-- inspector clipboard -->
-        <rect x="128" y="150" width="34" height="44" rx="4" fill="var(--clipboard)" stroke="var(--ink)" stroke-width="3" transform="rotate(-8 145 172)"/>
-        <path d="M135 166h20M135 175h20M135 184h12" stroke="var(--ink)" stroke-width="2" transform="rotate(-8 145 172)"/>
-      </g>
-      <g class="wolf-head">
-        <path d="M120 40 L138 6 L150 48 Z" fill="var(--wolf)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
-        <path d="M128 38 L137 18 L143 42 Z" fill="var(--wolf-ear)"/>
-        <path d="M150 50 L178 22 L176 66 Z" fill="var(--wolf)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
-        <!-- head + snout pointing left -->
-        <path d="M168 70 C 172 110, 150 130, 120 128 C 100 127, 90 118, 70 112 C 40 104, 22 100, 20 90 C 18 80, 30 74, 52 72 C 80 68, 100 44, 130 42 C 152 41, 166 52, 168 70 Z"
-              fill="var(--wolf)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
-        <path d="M30 96 C 50 104, 80 108, 104 116" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
-        <ellipse cx="22" cy="84" rx="9" ry="7" fill="var(--ink)"/>
-        <ellipse class="wolf-cheek" cx="100" cy="98" rx="16" ry="13" fill="var(--wolf-light)"/>
-        <!-- inspector hat -->
-        <path d="M100 46 C 112 22, 160 20, 168 50 Z" fill="var(--hat)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
-        <path d="M92 50 C 120 40, 160 44, 178 54" fill="none" stroke="var(--ink)" stroke-width="6" stroke-linecap="round"/>
-        <circle cx="112" cy="68" r="8" fill="#fff" stroke="var(--ink)" stroke-width="3"/>
-        <circle class="wolf-pupil" cx="108" cy="68" r="3.6" fill="var(--ink)"/>
-        <path d="M98 57 L122 61" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
-      </g>
-    </svg>
-  </template>
 
   <script src="/static/app.js"></script>
 </body>
