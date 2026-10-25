@@ -54,7 +54,7 @@ def test_huff_risk_is_clamped():
     assert run(raws)["huff_risk"] == 0
 
 
-@pytest.mark.parametrize("risk,verdict", [(0, "brick"), (34, "brick"), (35, "sticks"), (65, "sticks"), (66, "straw"), (100, "straw")])
+@pytest.mark.parametrize("risk,verdict", [(0, "brick"), (39, "brick"), (40, "sticks"), (60, "sticks"), (61, "straw"), (100, "straw")])
 def test_verdict_thresholds(risk, verdict):
     assert scorer.verdict_for(risk) == verdict
 

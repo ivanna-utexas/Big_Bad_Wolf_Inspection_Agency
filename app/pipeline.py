@@ -298,6 +298,8 @@ class Inspector:
             "themes": themes,
             "signals_fired": scored["signals_fired"],
             "components": scored["components"],
+            # Risk cut-offs, so the meter's zones always match the scorer (quality = 100 - risk).
+            "thresholds": {"brick_below": scorer.BRICK_BELOW, "straw_above": scorer.STRAW_ABOVE},
             "narration": {
                 "wolf_opening": narration["wolf_opening"],
                 "verdict_line": narration["verdict_line"],

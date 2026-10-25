@@ -306,6 +306,7 @@
     $("#meter").setAttribute("aria-valuenow", quality(d.huff_risk));
 
     renderThemes(d.themes);
+    applyThresholds(d);
     renderWhy(d);
     updateListButton();
     show("result");
@@ -337,6 +338,21 @@
     );
   }
 
+  // Quality-score edges of the meter zones, from the scorer's risk thresholds.
+  function qualityZones(d) {
+    const t = d.thresholds || { brick_below: 40, straw_above: 60 };
+    return { strawEnd: 100 - t.straw_above, brickStart: 100 - t.brick_below };
+  }
+
+  function applyThresholds(d) {
+    const { strawEnd, brickStart } = qualityZones(d);
+    const meter = $("#meter");
+    meter.style.setProperty("--straw-end", strawEnd + "%");
+    meter.style.setProperty("--brick-start", brickStart + "%");
+    $("#tick-straw").style.left = strawEnd + "%";
+    $("#tick-brick").style.left = brickStart + "%";
+  }
+
   function renderWhy(d) {
     const c = d.components || {};
     const rows = d.signals_fired.map((s) =>
@@ -362,7 +378,10 @@
             el("tbody", {}, rows))
         : el("p", { text: "No checklist phrases matched." }),
       el("p", { text: parts.map(([k, v]) => `${k} ${k === "Starting point" ? v : signed(v)}`).join(" · ") + ` → risk ${d.huff_risk}/100 (clamped to 0–100). Quality score = 100 − risk = ${quality(d.huff_risk)}/100.` }),
-      el("p", { text: "Thresholds: quality over 65 is brick, 35–65 is sticks, under 35 is straw." })
+      (() => {
+        const { strawEnd, brickStart } = qualityZones(d);
+        return el("p", { text: `Thresholds: quality over ${brickStart} is brick, ${strawEnd}–${brickStart} is sticks, under ${strawEnd} is straw.` });
+      })()
     );
   }
 
@@ -991,7 +1010,8 @@
   });
   $("#btn-about-home").addEventListener("click", () => openAbout());
   $("#footer-about").addEventListener("click", (e) => { e.preventDefault(); openAbout(); });
-  $("#about-back").addEventListener("click", () => (history.state && history.state.inApp ? history.back() : goHome()));
+  // The Meet the Wolf page may not have a Back button; skip quietly instead of crashing the whole startup.
+  $("#about-back")?.addEventListener("click", () => (history.state && history.state.inApp ? history.back() : goHome()));
   $("#about-start").addEventListener("click", goHome);
   $("#map-back").addEventListener("click", () => (history.state && history.state.inApp ? history.back() : goHome()));
   window.addEventListener("popstate", route);

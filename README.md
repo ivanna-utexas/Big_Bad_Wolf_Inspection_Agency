@@ -101,7 +101,7 @@ The scorer decides the verdict. The LLM only narrates it and never sees or chang
 - **Stars:** `(3.5 − recency-weighted average of the newest reviews) × 12`.
 - **Topics:** Google's topic chips that match a signal (e.g. "roaches · 14 mentions"), scaled by total review count, capped at ±8.
 - **Owner replies:** +5 if replies to negative reviews are near copy-paste, −3 if they're specific and varied.
-- **Verdict:** under 35 brick, 35–65 sticks, over 65 straw. Fewer than 15 usable reviews returns `not_enough_data`.
+- **Verdict:** huff_risk under 40 brick, 40–60 sticks, over 60 straw (shown on the page as a quality score, 100 − risk). Fewer than 15 usable reviews returns `not_enough_data`.
 
 All constants are at the top of `app/scorer.py`. The "Why this verdict?" drawer in the UI shows every phrase that fired, how many reviews used it, its weight, and its impact.
 
