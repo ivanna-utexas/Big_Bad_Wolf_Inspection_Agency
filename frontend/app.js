@@ -11,6 +11,9 @@
     "Counting roaches (allegedly)…",
     "Knocking on the leasing office door…",
     "Checking under the floorboards…",
+    "I swear I'm vegan now.",
+    "Huffing and puffing…",
+    "Following the trail…",
   ];
   // Hand-drawn material icons (hay, logs, brick). Unknown verdicts show "?".
   const HOUSE_ICON_SRC = { brick: "/static/img/icon-brick.webp", sticks: "/static/img/icon-sticks.webp", straw: "/static/img/icon-straw.webp" };
@@ -144,6 +147,53 @@
       picks.classList.remove("gusted");
       huffing = false;
     }, 1250);
+  }
+
+  // ---------- the wolf's rotating home-page line (typewriter) ----------
+
+  const WOLF_LINES = [
+    "Little pigs, little pigs, let me read your reviews.",
+    "Bad housing? Not by the hair on my chinny chin chin.",
+    "I huff and I puff and I call the bluff.",
+    "Austin, is your apartment made of straw, sticks, or brick?",
+    "I swear I'm vegan now.",
+  ];
+
+  // Landing page rotation: the wolf's one-liners alternating with his "inspection in progress" lines.
+  function homeLines() {
+    const out = [];
+    for (let i = 0; i < Math.max(WOLF_LINES.length, LOADING_LINES.length); i++) {
+      if (WOLF_LINES[i]) out.push(WOLF_LINES[i]);
+      if (LOADING_LINES[i]) out.push(LOADING_LINES[i]);
+    }
+    return out;
+  }
+
+  function startWolfLines() {
+    const box = $("#home-quote");
+    if (!box) return;
+    const WOLF_LINES_ALL = homeLines();
+    let line = 0;
+    // Opening quote mark right away; the closing one only once the line is complete.
+    const show = (text, done = true) => { box.textContent = `"${text}${done ? '"' : ""}`; };
+    if (reducedMotion()) {
+      // No typing animation: just swap the line every few seconds.
+      setInterval(() => show(WOLF_LINES_ALL[(line = (line + 1) % WOLF_LINES_ALL.length)]), 6000);
+      return;
+    }
+    const TYPE_MS = 45, ERASE_MS = 22, HOLD_MS = 3200, GAP_MS = 350;
+    const type = (text, i = 0) => {
+      show(text.slice(0, i), i === text.length);
+      if (i < text.length) setTimeout(() => type(text, i + 1), TYPE_MS);
+      else setTimeout(() => erase(text, text.length), HOLD_MS);
+    };
+    const erase = (text, i) => {
+      show(text.slice(0, i), false);
+      if (i > 0) setTimeout(() => erase(text, i - 1), ERASE_MS);
+      else setTimeout(() => type(WOLF_LINES_ALL[(line = (line + 1) % WOLF_LINES_ALL.length)]), GAP_MS);
+    };
+    // The first line is already on the page; hold it, then start rotating.
+    setTimeout(() => erase(WOLF_LINES_ALL[0], WOLF_LINES_ALL[0].length), HOLD_MS);
   }
 
   // ---------- search + autocomplete ----------
@@ -1009,7 +1059,6 @@
     goHome();
   });
   $("#btn-about-home").addEventListener("click", () => openAbout());
-  $("#footer-about").addEventListener("click", (e) => { e.preventDefault(); openAbout(); });
   // The Meet the Wolf page may not have a Back button; skip quietly instead of crashing the whole startup.
   $("#about-back")?.addEventListener("click", () => (history.state && history.state.inApp ? history.back() : goHome()));
   $("#about-start").addEventListener("click", goHome);
@@ -1017,4 +1066,5 @@
   window.addEventListener("popstate", route);
   renderList();
   route();
+  startWolfLines();
 })();

@@ -42,7 +42,7 @@
   --shadow: 0 2px 6px rgba(54, 56, 77, .12), 0 1px 2px rgba(54, 56, 77, .08); /* soft resting shadow */
   --shadow-lift: 0 10px 20px rgba(54, 56, 77, .18), 0 3px 6px rgba(54, 56, 77, .08); /* hover: rises, shadow spreads */
   --shadow-press: 0 1px 2px rgba(54, 56, 77, .12);
-  --radius: 16px;
+  --radius: 0px;
   --display: "Fira Sans", sans-serif;
   --body: "Fira Sans", sans-serif;
   --script: "Playwrite IT Trad", cursive;   /* signature only */
@@ -75,7 +75,7 @@ h2 { margin: 0 0 4px; font-size: 1.6rem; line-height: 1.2; }
 }
 h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: var(--forest-dark); }
 /* Logo: the title image doubles as the "home" link. */
-.logo a { display: inline-block; border-radius: 12px; transition: transform .2s ease-out; }
+.logo a { display: inline-block; border-radius: 8px; transition: transform .2s ease-out; }
 .logo img { display: block; width: min(100%, 620px); height: auto; margin: 0 auto; }
 .logo a:hover { transform: scale(1.02) rotate(-.5deg); }
 .logo a:focus-visible { outline: 3px solid var(--lavender); outline-offset: 6px; }
@@ -83,7 +83,7 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 
 /* ---- buttons ---- */
 .btn {
-  font-size: 1rem; font-weight: 600; padding: 10px 16px; border: 3px solid var(--ink); border-radius: 12px;
+  font-size: 1rem; font-weight: 600; padding: 10px 16px; border: 3px solid var(--ink); border-radius: 8px;
   background: var(--card); color: var(--ink); box-shadow: var(--shadow); cursor: pointer;
   transition: transform .12s, box-shadow .12s; min-height: 44px;
 }
@@ -104,13 +104,13 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 .search-box { display: flex; gap: 8px; }
 .search input {
   flex: 1; min-width: 0; font: 1.1rem var(--body); padding: 12px 14px; border: 3px solid var(--ink);
-  border-radius: 12px; background: #fff; color: var(--ink); box-shadow: var(--shadow);
+  border-radius: 8px; background: #fff; color: var(--ink); box-shadow: var(--shadow);
 }
 .suggestions {
   position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 8px); margin: 0; padding: 6px; list-style: none;
-  background: var(--card); border: 3px solid var(--ink); border-radius: 12px; box-shadow: var(--shadow);
+  background: var(--card); border: 3px solid var(--ink); border-radius: 8px; box-shadow: var(--shadow);
 }
-.suggestions li { padding: 10px 12px; border-radius: 8px; cursor: pointer; }
+.suggestions li { padding: 10px 12px; border-radius: 5px; cursor: pointer; }
 .suggestions li[aria-selected="true"], .suggestions li:hover { background: var(--paper-2); }
 .suggestions small { display: block; color: var(--ink-soft); }
 
@@ -138,12 +138,12 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 .candidate-list { display: grid; gap: 12px; }
 .candidate {
   display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; font: inherit; color: inherit;
-  padding: 10px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; cursor: pointer; box-shadow: var(--shadow);
+  padding: 10px; border: 3px solid var(--ink); border-radius: 8px; background: #fff; cursor: pointer; box-shadow: var(--shadow);
   transition: transform .12s, box-shadow .12s;
 }
 .candidate:hover { background: var(--paper); transform: scale(1.02); box-shadow: var(--shadow-lift); }
 .candidate img, .candidate .thumb-fallback {
-  width: 64px; height: 64px; flex: none; border-radius: 8px; object-fit: cover; border: 2px solid var(--ink); background: var(--paper-2);
+  width: 64px; height: 64px; flex: none; border-radius: 5px; object-fit: cover; border: 2px solid var(--ink); background: var(--paper-2);
   display: grid; place-items: center; font-size: 1.8rem;
 }
 .candidate strong { display: block; font-family: var(--display); font-size: 1.1rem; }
@@ -162,7 +162,7 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 
 /* ---- result ---- */
 .place-head { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
-.place-head img { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; border: 3px solid var(--ink); flex: none; }
+.place-head img { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; border: 3px solid var(--ink); flex: none; }
 .place-head p { margin: 0; }
 
 .scene-wrap { position: relative; margin: 8px -8px 0; }
@@ -209,7 +209,7 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 
 .stamp {
   position: absolute; top: 4%; left: 50%; transform: translateX(-50%) rotate(-8deg) scale(.6); opacity: 0;
-  margin: 0; padding: 4px 16px; border: 4px solid currentColor; border-radius: 10px; font-size: clamp(1.4rem, 6vw, 2.4rem);
+  margin: 0; padding: 4px 16px; border: 4px solid currentColor; border-radius: 6px; font-size: clamp(1.4rem, 6vw, 2.4rem);
   font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: rgba(251, 251, 255, .92);
   transition: opacity .3s, transform .3s cubic-bezier(.3, 1.6, .5, 1); pointer-events: none;
 }
@@ -241,18 +241,18 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 
 .section-title { font-size: 1.3rem; margin: 8px 0 12px; }
 .themes { display: grid; gap: 12px; }
-.theme-card { border: 3px solid var(--ink); border-radius: 12px; padding: 12px 14px; background: #fff; }
+.theme-card { border: 3px solid var(--ink); border-radius: 8px; padding: 12px 14px; background: #fff; }
 .theme-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .theme-card h4 { margin: 0; font-family: var(--display); font-size: 1.15rem; }
 .tone { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px; border: 2px solid currentColor; }
 .tone.bad { color: var(--bad); }
 .tone.good { color: var(--good); }
 .wolf-comment { margin: 6px 0 10px; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 1.15rem; line-height: 1.35; }
-.snippet { margin: 0 0 8px; padding: 8px 12px; border-left: 5px solid var(--heart); background: var(--paper); border-radius: 0 8px 8px 0; font-size: .95rem; }
+.snippet { margin: 0 0 8px; padding: 8px 12px; border-left: 5px solid var(--heart); background: var(--paper); border-radius: 0 5px 5px 0; font-size: .95rem; }
 .snippet footer { font-size: .8rem; color: var(--ink-soft); margin-top: 4px; }
 .empty-themes { color: var(--ink-soft); }
 
-.why { margin: 16px 0; border: 3px dashed var(--ink-soft); border-radius: 12px; padding: 8px 12px; background: var(--paper); }
+.why { margin: 16px 0; border: 3px dashed var(--ink-soft); border-radius: 8px; padding: 8px 12px; background: var(--paper); }
 .why summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
 .why table { width: 100%; border-collapse: collapse; font-size: .9rem; margin: 8px 0; }
 .why th, .why td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--paper-2); }
@@ -269,7 +269,7 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 /* ---- My List ---- */
 .list-toggle {
   position: fixed; top: 12px; right: 12px; z-index: 20; width: 58px; height: 58px; padding: 0;
-  display: grid; place-items: center; border: 3px solid var(--ink); border-radius: 14px;
+  display: grid; place-items: center; border: 3px solid var(--ink); border-radius: 9px;
   background: var(--card); box-shadow: var(--shadow); cursor: pointer; transition: transform .12s, box-shadow .12s;
 }
 .list-toggle[hidden] { display: none; }
@@ -299,7 +299,7 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 .my-list-icon { width: 38px; height: 38px; flex: none; }
 .my-list-head h2 { flex: 1; margin: 0; font-size: 1.45rem; }
 .icon-btn {
-  width: 40px; height: 40px; flex: none; border: 2px solid var(--ink); border-radius: 10px; background: #fff;
+  width: 40px; height: 40px; flex: none; border: 2px solid var(--ink); border-radius: 6px; background: #fff;
   color: var(--ink); font-size: 1.5rem; line-height: 1; cursor: pointer;
   transition: transform .12s, box-shadow .12s;
 }
@@ -309,14 +309,14 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 .list-empty strong { color: var(--ink); font-family: var(--display); font-size: 1.1rem; font-weight: 600; }
 .list-items { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
 .list-item {
-  display: flex; align-items: center; border: 2px solid var(--ink); border-radius: 10px; background: #fff;
+  display: flex; align-items: center; border: 2px solid var(--ink); border-radius: 6px; background: #fff;
   transition: transform .12s, box-shadow .12s;
 }
 /* The row lifts when you hover its "open" button; the × lifts on its own. */
 .list-item:has(.open:hover) { transform: scale(1.03); box-shadow: var(--shadow-lift); }
 .list-item .open {
   flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 10px; text-align: left;
-  font: inherit; color: inherit; background: none; border: 0; border-radius: 8px; cursor: pointer;
+  font: inherit; color: inherit; background: none; border: 0; border-radius: 5px; cursor: pointer;
 }
 .list-item .open:hover { background: var(--paper); }
 .house-icon { display: inline-flex; align-items: center; justify-content: center; font-family: var(--display); font-weight: 700; }
@@ -325,7 +325,7 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 .list-item .info { min-width: 0; }
 .list-item strong { display: block; font-family: var(--display); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list-item small { color: var(--ink-soft); }
-.list-item .remove { flex: none; width: 40px; height: 40px; border: 0; background: none; color: var(--ink-soft); font-size: 1.3rem; cursor: pointer; border-radius: 8px; }
+.list-item .remove { flex: none; width: 40px; height: 40px; border: 0; background: none; color: var(--ink-soft); font-size: 1.3rem; cursor: pointer; border-radius: 5px; }
 .list-item .remove:hover { color: var(--heart); background: var(--paper); }
 .list-compare { width: 100%; }
 .list-hint { margin: 8px 0 0; text-align: center; font-size: .85rem; color: var(--ink-soft); }
@@ -342,7 +342,7 @@ h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; color: v
 
 /* ---- compare ---- */
 .compare-list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 16px; }
-.compare-card { border: 3px solid var(--ink); border-radius: 12px; padding: 12px; background: #fff; text-align: center; font: inherit; color: inherit; width: 100%; }
+.compare-card { border: 3px solid var(--ink); border-radius: 8px; padding: 12px; background: #fff; text-align: center; font: inherit; color: inherit; width: 100%; }
 button.compare-card { cursor: pointer; box-shadow: var(--shadow); transition: transform .15s, box-shadow .15s; }
 button.compare-card:hover { transform: scale(1.04); box-shadow: var(--shadow-lift); }
 .compare-card.survivor { background: #e7f4df; box-shadow: 0 0 0 4px var(--good), var(--shadow); }
@@ -355,23 +355,23 @@ button.compare-card.survivor:hover { box-shadow: 0 0 0 4px var(--good), var(--sh
 .compare-card .crown { font-weight: 700; color: var(--good); }
 
 /* ---- neighborhood map ---- */
-.home-ctas { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+.home-ctas { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: -4px 0 20px; } /* sits just below the home panel */
 .home-ctas .btn { background: var(--lavender-light); border-color: var(--lavender); border-radius: 999px; padding: 10px 22px; letter-spacing: .02em; }
 .home-ctas .btn:hover { background: #b3b6ec; border-color: var(--ink); }
 /* z-index 0 keeps Leaflet's internal layers (z 400+) from covering the list button and toast */
 .map-canvas {
-  position: relative; z-index: 0; height: min(520px, 65vh); border: 3px solid var(--ink); border-radius: 12px;
+  position: relative; z-index: 0; height: min(520px, 65vh); border: 3px solid var(--ink); border-radius: 8px;
   overflow: hidden; background: var(--paper-2);
 }
 .rent-line { text-align: center; font-weight: 700; margin: -4px 0 12px; }
 .rent-filter {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin: 0 0 12px;
-  padding: 10px 12px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper);
+  padding: 10px 12px; border: 2px solid var(--ink); border-radius: 8px; background: var(--paper);
 }
 .rent-filter-title { font-family: var(--display); font-weight: 600; }
 .rent-filter label { display: inline-flex; align-items: center; gap: 4px; }
 .rent-filter input[type="number"] {
-  width: 6.5em; min-height: 36px; padding: 4px 8px; border: 2px solid var(--ink); border-radius: 8px;
+  width: 6.5em; min-height: 36px; padding: 4px 8px; border: 2px solid var(--ink); border-radius: 5px;
   font: inherit; background: #fff; color: var(--ink);
 }
 .rent-filter .rent-unknown { font-size: .9rem; color: var(--ink-soft); }
@@ -389,7 +389,7 @@ button.compare-card.survivor:hover { box-shadow: 0 0 0 4px var(--good), var(--sh
 .map-popup strong { display: block; font-family: var(--display); font-size: 1.05rem; font-weight: 600; }
 .map-popup .verdict { margin: 4px 0 8px; color: var(--ink-soft); display: flex; align-items: center; justify-content: center; gap: 4px; }
 .map-popup .house-icon { width: 24px; height: 24px; }
-.leaflet-popup-content-wrapper { border: 2px solid var(--ink); border-radius: 12px; background: var(--card); box-shadow: var(--shadow-lift); }
+.leaflet-popup-content-wrapper { border: 2px solid var(--ink); border-radius: 8px; background: var(--card); box-shadow: var(--shadow-lift); }
 .leaflet-popup-tip { box-shadow: var(--shadow); }
 
 /* ---- Meet the Wolf (character select) ---- */
@@ -399,7 +399,7 @@ button.compare-card.survivor:hover { box-shadow: 0 0 0 4px var(--good), var(--sh
   text-transform: uppercase; font-size: .85rem; color: var(--lavender);
 }
 .char-stage {
-  position: relative; height: 380px; border: 3px solid var(--ink); border-radius: 14px; overflow: hidden;
+  position: relative; height: 380px; border: 3px solid var(--ink); border-radius: 9px; overflow: hidden;
   background: linear-gradient(180deg, #e6e7f7 0%, var(--lavender-light) 100%);
   display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px;
 }
@@ -413,7 +413,7 @@ button.compare-card.survivor:hover { box-shadow: 0 0 0 4px var(--good), var(--sh
 .char-img.swap { animation: char-in .45s cubic-bezier(.2, .9, .3, 1.3), bob 2.8s ease-in-out .45s infinite; }
 @keyframes char-in { from { opacity: 0; transform: scale(.94); } }
 
-.char-card { margin-top: 16px; border: 3px solid var(--ink); border-radius: 14px; padding: 14px 16px; background: var(--card); }
+.char-card { margin-top: 16px; border: 3px solid var(--ink); border-radius: 9px; padding: 14px 16px; background: var(--card); }
 .char-id { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
 .char-avatar { width: 84px; height: 84px; flex: none; }
 .char-title { margin: 0; color: var(--ink-soft); font-size: .92rem; }
@@ -429,9 +429,11 @@ button.compare-card.survivor:hover { box-shadow: 0 0 0 4px var(--good), var(--sh
 .signature { margin: 4px 0 0; text-align: right; font-family: var(--script); font-size: 1.5rem; color: var(--ink); transform: rotate(-3deg); }
 .signature::before { content: "~ "; color: var(--lavender); }
 .signature.small { font-size: 1.05rem; margin: -2px 0 8px; text-align: center; }
+/* Typing line: room for two lines so the panel doesn't jump, plus a blinking cursor. */
+#home-quote { min-height: 2.6em; display: flex; align-items: center; justify-content: center; }
+#home-quote::after { content: ""; display: inline-block; width: 2px; height: 1em; margin-left: 3px; background: var(--ink); animation: caret 1s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
 #home .wolf-says { font-family: var(--serif); font-style: italic; font-weight: 600; font-size: 1.5rem; line-height: 1.3; }
-.footer-link { color: var(--ink); font-weight: 700; text-underline-offset: 3px; }
-.footer-link:hover { color: var(--lavender); }
 @media (max-width: 600px) {
   .char-stage { height: 320px; }
   .char-img { height: 280px; }
@@ -443,7 +445,7 @@ button.compare-card.survivor:hover { box-shadow: 0 0 0 4px var(--good), var(--sh
 .footer strong { color: var(--ink); }
 .credits { font-size: .8rem; }
 .toast {
-  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px; border-radius: 12px;
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px; border-radius: 8px;
   background: var(--ink); color: var(--paper); font-weight: 700; z-index: 10; max-width: calc(100% - 32px);
 }
 

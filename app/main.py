@@ -48,6 +48,17 @@ def build_inspector() -> Inspector:
 
 def create_app(inspector: Inspector | None = None) -> FastAPI:
     app = FastAPI(title="Big Bad Wolf Inspection Agency")
+
+    @app.middleware("http")
+    async def always_revalidate_frontend(request, call_next):
+        # Make browsers check for a newer page/script/style on every load (cheap: unchanged files
+        # come back as 304 via the ETag). Without this, a browser can keep running an old app.js.
+        response = await call_next(request)
+        path = request.url.path
+        if path == "/" or path.startswith("/static/"):
+            response.headers.setdefault("Cache-Control", "no-cache")
+        return response
+
     app.state.inspector = inspector or build_inspector()
 
     def run(fn, *args):

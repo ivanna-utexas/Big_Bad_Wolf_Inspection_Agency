@@ -64,11 +64,16 @@
 
     <main id="view" aria-live="polite">
       <!-- Home -->
-      <section id="home" class="panel intro">
-        <div class="wolf-slot portrait" data-wolf></div>
-        <p class="wolf-says">"Little pigs, little pigs, let me read your reviews."</p>
-        <p class="hint">Try one of these:</p>
-        <div id="quick-picks" class="quick-picks"></div>
+      <section id="home">
+        <div class="panel intro">
+          <div class="wolf-slot portrait" data-wolf></div>
+          <!-- The wolf's line types itself out and changes every few seconds (see startWolfLines in app.js).
+               Screen readers get the first line once instead of every keystroke. -->
+          <p class="sr-only">"Little pigs, little pigs, let me read your reviews."</p>
+          <p id="home-quote" class="wolf-says typing" aria-hidden="true">"Little pigs, little pigs, let me read your reviews."</p>
+          <p class="hint">Try one of these:</p>
+          <div id="quick-picks" class="quick-picks"></div>
+        </div>
         <div class="home-ctas">
           <button id="btn-map-home" class="btn" type="button">See the neighborhood map</button>
           <button id="btn-about-home" class="btn" type="button">Meet the Wolf</button>
@@ -317,8 +322,7 @@
       <p><strong>Satire based on what reviewers say, not facts about the building.</strong>
         The wolf quotes short, anonymized snippets of public Google Maps reviews and never shows reviewer names or photos.
         Always tour a place and read your lease.</p>
-      <p><a id="footer-about" class="footer-link" href="/?page=wolf">Meet the Wolf</a></p>
-      <p class="credits">Reviews via SerpApi (Google Maps + Google Maps Reviews). Built at HackTX 2026.</p>
+      <p class="credits">Reviews via SerpApi (Google Maps + Google Maps Reviews). Built by Ivanna and Masha at HackTX 2026.</p>
     </footer>
   </div>
 
