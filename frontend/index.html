@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Big Bad Wolf Inspection Agency</title>
   <meta name="description" content="The Big Bad Wolf inspects West Campus apartments by reading what reviewers say. Satire.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
     <symbol id="heart-house" viewBox="0 0 48 48">
       <path d="M11 20 V41 H37 V20" fill="var(--card)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
       <path d="M5 23 L24 7 L43 23" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M24 37 C 15.5 31, 14.5 26.5, 17 23.8 C 19.6 21, 23 22.4, 24 25.2 C 25 22.4, 28.4 21, 31 23.8 C 33.5 26.5, 32.5 31, 24 37 Z" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M24 37 C 15.5 31, 14.5 26.5, 17 23.8 C 19.6 21, 23 22.4, 24 25.2 C 25 22.4, 28.4 21, 31 23.8 C 33.5 26.5, 32.5 31, 24 37 Z" fill="var(--heart)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/>
     </symbol>
   </svg>
 
@@ -34,7 +34,7 @@
     </header>
     <div id="list-empty" class="list-empty">
       <p><strong>Add a sturdy home to your list!</strong></p>
-      <p>Inspect a building, then tap “♡ Add to list” to keep it here.</p>
+      <p>Inspect a building, then tap “Add to list” to keep it here.</p>
     </div>
     <ul id="list-items" class="list-items"></ul>
     <button id="list-compare" class="btn btn-primary list-compare" type="button">Compare locations</button>
@@ -44,7 +44,11 @@
   <div class="page">
     <header class="masthead">
       <p class="badge-line">Est. once upon a time · Licensed to huff</p>
-      <h1>Big Bad Wolf<br><span>Inspection Agency</span></h1>
+      <h1 class="logo">
+        <a id="home-link" href="/" title="Back to the start">
+          <img src="/static/img/logo.webp" alt="Big Bad Wolf Inspection Agency" width="1600" height="310">
+        </a>
+      </h1>
       <p class="tagline">Name a residential space in Austin. The wolf reads what reviewers say and tells you if it's brick, sticks, or straw.</p>
     </header>
 
@@ -65,7 +69,10 @@
         <p class="wolf-says">"Little pigs, little pigs, let me read your reviews."</p>
         <p class="hint">Try one of these:</p>
         <div id="quick-picks" class="quick-picks"></div>
-        <button id="btn-map-home" class="btn map-cta" type="button">🗺️ See the neighborhood map</button>
+        <div class="home-ctas">
+          <button id="btn-map-home" class="btn" type="button">See the neighborhood map</button>
+          <button id="btn-about-home" class="btn" type="button">Meet the Wolf</button>
+        </div>
       </section>
 
       <!-- Candidates -->
@@ -114,8 +121,8 @@
             </defs>
             <path class="hill" d="M0 250 Q160 228 320 244 T700 238 V280 H0Z"/>
 
-            <!-- straw (right, farthest from the wolf) -->
-            <g class="house" id="house-straw" data-kind="straw" transform="translate(506 0)">
+            <!-- straw (left, next to the wolf) -->
+            <g class="house" id="house-straw" data-kind="straw" transform="translate(150 0)">
               <g class="house-body">
                 <rect data-piece="wall" x="40" y="168" width="110" height="80" fill="var(--straw)" stroke="var(--ink)" stroke-width="3"/>
                 <path data-piece="wall" d="M50 178v62M64 176v66M78 178v64M92 176v66M106 178v62M120 176v66M134 178v64" stroke="var(--straw-dark)" stroke-width="2"/>
@@ -137,8 +144,8 @@
               </g>
             </g>
 
-            <!-- brick (left, next to the wolf) -->
-            <g class="house" id="house-brick" data-kind="brick" transform="translate(-207 0)">
+            <!-- brick (right, farthest from the wolf) -->
+            <g class="house" id="house-brick" data-kind="brick" transform="translate(150 0)">
               <g class="house-body">
                 <rect data-piece="wall" x="386" y="150" width="130" height="98" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
                 <rect data-piece="roof" x="478" y="96" width="20" height="40" fill="url(#bricks)" stroke="var(--ink)" stroke-width="3"/>
@@ -156,20 +163,34 @@
             <g class="pig" transform="translate(660 236)" style="--d: -1.2s"><use href="#pig-shape"/></g>
             <defs>
               <g id="pig-shape">
-                <ellipse cx="0" cy="0" rx="15" ry="13" fill="var(--pig)" stroke="var(--ink)" stroke-width="2.5"/>
-                <path d="M-11 -9 L-13 -18 L-5 -12 Z M11 -9 L13 -18 L5 -12 Z" fill="var(--pig)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>
-                <ellipse cx="0" cy="3" rx="6" ry="4.5" fill="var(--pig-dark)" stroke="var(--ink)" stroke-width="1.5"/>
-                <circle cx="-2" cy="3" r="1.2" fill="var(--ink)"/><circle cx="2" cy="3" r="1.2" fill="var(--ink)"/>
-                <circle cx="-6" cy="-4" r="1.8" fill="var(--ink)"/><circle cx="6" cy="-4" r="1.8" fill="var(--ink)"/>
+                <image href="/static/img/pig.webp" x="-16" y="-17" width="40" height="29.3"/>
               </g>
             </defs>
 
             <!-- wind -->
-            <g class="wind" stroke="var(--wind)" stroke-width="4" stroke-linecap="round" fill="none">
-              <!-- gusts start at the wolf's mouth in the blow pose (about 98, 114) and fan out toward the houses -->
-              <path d="M100 108 C 190 96, 280 126, 360 150"/>
-              <path d="M100 114 C 200 120, 310 152, 400 175 q 20 4 16 -8"/>
-              <path d="M100 120 C 180 142, 280 182, 370 200"/>
+            <!-- The huff: soft breath clouds plus faint, blurred air streaks with curls.
+                 Everything starts at the wolf's mouth in the blow pose (about 100, 114). -->
+            <defs>
+              <filter id="airy" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="1.1"/></filter>
+              <!-- solid in the middle, fading out at the edge, so puffs read as clouds of air (not bubbles) -->
+              <radialGradient id="puff-fill">
+                <stop offset="0" stop-color="var(--lavender-light)" stop-opacity=".7"/>
+                <stop offset=".55" stop-color="var(--lavender-light)" stop-opacity=".35"/>
+                <stop offset="1" stop-color="var(--lavender-light)" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="cloudy" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5"/></filter>
+            </defs>
+            <g class="breath" aria-hidden="true" filter="url(#cloudy)">
+              <circle cx="104" cy="114" r="9" fill="url(#puff-fill)" style="--dx: 70px; --dy: -10px; --t: 0s"/>
+              <circle cx="104" cy="114" r="9" fill="url(#puff-fill)" style="--dx: 120px; --dy: 8px; --t: .12s"/>
+              <circle cx="104" cy="114" r="9" fill="url(#puff-fill)" style="--dx: 170px; --dy: -4px; --t: .24s"/>
+              <circle cx="104" cy="114" r="9" fill="url(#puff-fill)" style="--dx: 230px; --dy: 16px; --t: .36s"/>
+            </g>
+            <g class="wind" stroke="var(--wind)" stroke-width="3" stroke-linecap="round" fill="none" filter="url(#airy)">
+              <path d="M106 104 C 180 84, 260 98, 320 116 c 22 6, 26 -14, 10 -17"/>
+              <path d="M106 112 C 200 114, 300 146, 400 170"/>
+              <path d="M106 120 C 180 138, 250 166, 340 184 c 18 4, 22 -12, 8 -13"/>
+              <path d="M110 96 C 190 70, 290 84, 380 116"/>
             </g>
 
             <!-- wolf -->
@@ -197,9 +218,9 @@
         <p id="r-rent" class="rent-line" hidden></p>
 
         <div class="actions">
-          <button id="btn-share" class="btn" type="button">🔗 Share</button>
-          <button id="btn-list" class="btn" type="button" aria-pressed="false">♡ Add to list</button>
-          <button id="btn-map" class="btn" type="button">🗺️ On the map</button>
+          <button id="btn-share" class="btn" type="button">Share</button>
+          <button id="btn-list" class="btn" type="button" aria-pressed="false"><svg class="btn-heart" viewBox="13.5 21 21 17" aria-hidden="true"><path d="M24 37 C 15.5 31, 14.5 26.5, 17 23.8 C 19.6 21, 23 22.4, 24 25.2 C 25 22.4, 28.4 21, 31 23.8 C 33.5 26.5, 32.5 31, 24 37 Z"/></svg><span class="btn-list-label">Add to list</span></button>
+          <button id="btn-map" class="btn" type="button">On the map</button>
         </div>
 
         <h3 class="section-title">What reviewers say</h3>
@@ -212,6 +233,7 @@
         </details>
 
         <p id="r-closing" class="wolf-says closing"></p>
+        <p class="signature small" aria-hidden="true">B. B. Wolf</p>
       </section>
 
       <!-- Compare -->
@@ -219,7 +241,7 @@
         <h2>Compare Locations</h2>
         <p class="sub">The wolf huffs at every home on your list. Only one will survive.</p>
         <form id="cmp-rent-filter" class="rent-filter" aria-label="Filter compared homes by monthly rent">
-          <span class="rent-filter-title">💵 Monthly rent</span>
+          <span class="rent-filter-title">Monthly rent</span>
           <label>from $<input name="min" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
           <label>to $<input name="max" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
           <label class="rent-unknown"><input name="unknown" type="checkbox" checked> include homes with unknown rent</label>
@@ -230,12 +252,53 @@
         <button id="compare-back" class="btn" type="button">Back</button>
       </section>
 
+      <!-- Meet the Wolf: character-select style profile -->
+      <section id="about" class="panel about" hidden aria-labelledby="about-title">
+        <p class="select-label">Agent profile</p>
+        <!-- He cycles through his poses on his own (see startPoseCycle in app.js). -->
+        <div class="char-stage">
+          <div class="spotlight" aria-hidden="true"></div>
+          <img id="char-img" class="char-img" src="/static/img/wolf-idle.webp" alt="The Big Bad Wolf, striking a few poses">
+        </div>
+
+        <div class="char-card">
+          <div class="char-id">
+            <img class="char-avatar" src="/static/img/wolf-avatar.webp" alt="" width="96" height="96">
+            <div>
+              <h2 id="about-title">B. B. Wolf</h2>
+              <p class="char-title">Licensed Inspector · Reformed Huffer · Austin, TX</p>
+            </div>
+          </div>
+
+          <ul class="stats" aria-label="Wolf stats">
+            <li><span>Lung power</span><span class="bar"><i style="--v: 99%"></i></span><b>99</b></li>
+            <li><span>Nose for mold</span><span class="bar"><i style="--v: 92%"></i></span><b>92</b></li>
+            <li><span>Reviews read</span><span class="bar"><i style="--v: 88%"></i></span><b>88</b></li>
+            <li><span>Patience</span><span class="bar"><i style="--v: 14%"></i></span><b>14</b></li>
+            <li><span>Rent paid on time</span><span class="bar"><i style="--v: 3%"></i></span><b>3</b></li>
+          </ul>
+
+          <div class="bio">
+            <p>For years, the Big Bad Wolf worked in residential demolition: unlicensed, unpaid, and frankly underappreciated. Then the bills came in. It turns out blowing down houses doesn't exactly pay the rent, and the pigs all upgraded to brick.</p>
+            <p>So he's turned over a new leaf. These days he reads every review, sniffs out every leak, and tells you whether a place will hold up <em>before</em> you sign the lease, not after he's huffed at it.</p>
+            <p>He still huffs. Just at mold now.</p>
+            <p class="fine-print">Fun fact: he lives in a brick house. He doesn't like to talk about it.</p>
+            <p class="signature" aria-label="Signed, B. B. Wolf">B. B. Wolf</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="about-start" class="btn btn-primary" type="button">Hire the wolf: start an inspection</button>
+          <button id="about-back" class="btn" type="button">Back</button>
+        </div>
+      </section>
+
       <!-- Neighborhood map -->
       <section id="map" class="panel" hidden>
         <h2>The Neighborhood</h2>
         <p class="sub">Every Austin home the wolf has inspected. Tap a house to see how it held up.</p>
         <form id="rent-filter" class="rent-filter" aria-label="Filter homes by monthly rent">
-          <span class="rent-filter-title">💵 Monthly rent</span>
+          <span class="rent-filter-title">Monthly rent</span>
           <label>from $<input id="rent-min" name="min" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
           <label>to $<input id="rent-max" name="max" type="number" inputmode="numeric" min="0" step="50" placeholder="any"></label>
           <label class="rent-unknown"><input id="rent-unknown" name="unknown" type="checkbox" checked> include homes with unknown rent</label>
@@ -245,7 +308,7 @@
         <div id="map-canvas" class="map-canvas" role="region" aria-label="Map of inspected homes"></div>
         <p id="map-status" class="map-status" hidden></p>
         <div class="actions">
-          <button id="map-share" class="btn" type="button">🔗 Share the map</button>
+          <button id="map-share" class="btn" type="button">Share the map</button>
           <button id="map-back" class="btn" type="button">Back</button>
         </div>
       </section>
@@ -255,6 +318,7 @@
       <p><strong>Satire based on what reviewers say, not facts about the building.</strong>
         The wolf quotes short, anonymized snippets of public Google Maps reviews and never shows reviewer names or photos.
         Always tour a place and read your lease.</p>
+      <p><a id="footer-about" class="footer-link" href="/?page=wolf">Meet the Wolf</a></p>
       <p class="credits">Reviews via SerpApi (Google Maps + Google Maps Reviews). Built at HackTX 2026.</p>
     </footer>
   </div>

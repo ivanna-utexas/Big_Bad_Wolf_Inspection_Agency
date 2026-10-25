@@ -1,4 +1,4 @@
-# 🐺 Big Bad Wolf Inspection Agency
+# Big Bad Wolf Inspection Agency
 
 *HackTX 2026, theme: fairytales.*
 

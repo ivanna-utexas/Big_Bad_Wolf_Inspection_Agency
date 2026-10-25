@@ -17,8 +17,8 @@ from typing import Any
 # ---- tunable constants ---------------------------------------------------
 
 MIN_REVIEWS = 15  # fewer usable reviews than this -> "not_enough_data"
-BRICK_BELOW = 35  # huff_risk < 35  -> brick
-STRAW_ABOVE = 65  # huff_risk > 65  -> straw (35..65 is sticks)
+BRICK_BELOW = 40  # huff_risk < 40  -> brick
+STRAW_ABOVE = 60  # huff_risk > 60  -> straw (40..60 is sticks)
 
 BASE_RISK = 40.0  # where a building with no signals and a 3.5 star average lands
 SIGNAL_SCALE = 7.0  # multiplier on the average signal weight per review

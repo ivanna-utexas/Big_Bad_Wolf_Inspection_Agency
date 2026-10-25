@@ -2,7 +2,7 @@
 
 (() => {
   const $ = (sel) => document.querySelector(sel);
-  const VIEWS = ["home", "candidates", "loading", "message", "result", "compare", "map"];
+  const VIEWS = ["home", "candidates", "loading", "message", "result", "compare", "map", "about"];
   const QUICK_PICKS = ["The Castilian", "26 West", "Lark Austin", "Villas on Rio"];
   const LOADING_LINES = [
     "Taking a deeeep breath…",
@@ -12,7 +12,14 @@
     "Knocking on the leasing office door…",
     "Checking under the floorboards…",
   ];
-  const HOUSE_ICON = { brick: "🧱", sticks: "🪵", straw: "🌾", not_enough_data: "🤷" };
+  // Hand-drawn material icons (hay, logs, brick). Unknown verdicts show "?".
+  const HOUSE_ICON_SRC = { brick: "/static/img/icon-brick.webp", sticks: "/static/img/icon-sticks.webp", straw: "/static/img/icon-straw.webp" };
+  function houseIcon(verdict, tag = "span") {
+    const src = HOUSE_ICON_SRC[verdict];
+    const box = el(tag, { class: "house-icon", "aria-hidden": "true" });
+    box.append(src ? el("img", { src, alt: "", decoding: "async" }) : "?");
+    return box;
+  }
   const VERDICT_WORD = { brick: "Brick", sticks: "Sticks", straw: "Straw" };
   const LIST_KEY = "bbw-my-list";
 
@@ -112,12 +119,13 @@
       slot.append(el("img", { class: "wolf", src: WOLF_IMG[pose], alt: "", decoding: "async" }));
     });
     const portrait = $(".wolf-slot.portrait");
-    if (portrait) portrait.addEventListener("click", () => huffAtPicks(portrait));
+    // Hover (or tap, on touch screens) and he huffs at the quick picks.
+    if (portrait) portrait.addEventListener("mouseenter", () => huffAtPicks(portrait));
     // Warm the cache so pose swaps in the scene don't flash empty.
     Object.values(WOLF_IMG).forEach((src) => { new Image().src = src; });
   }
 
-  // Easter egg: click the home wolf and he blows on the quick-pick buttons.
+  // Hover the home wolf and he blows on the quick-pick buttons.
   let huffing = false;
   function huffAtPicks(slot) {
     if (huffing) return;
@@ -165,7 +173,7 @@
         el("button", { class: "candidate", type: "button", onclick: () => inspect(c.data_id) },
           c.thumbnail
             ? el("img", { src: c.thumbnail, alt: "", loading: "lazy", referrerpolicy: "no-referrer" })
-            : el("div", { class: "thumb-fallback", "aria-hidden": "true", text: "🏠" }),
+            : el("div", { class: "thumb-fallback", "aria-hidden": "true", text: (c.title || "?").trim().charAt(0).toUpperCase() }),
           el("div", {},
             el("strong", { text: c.title }),
             el("span", { text: [c.address, c.rating != null ? `★ ${c.rating}` : null, c.reviews != null ? `${c.reviews} reviews` : null].filter(Boolean).join(" · ") })
@@ -294,7 +302,7 @@
       (d.cached ? " Served fresh from the wolf's den (cached)." : "");
     const rent = d.place.rent;
     $("#r-rent").hidden = !rent;
-    $("#r-rent").textContent = rent ? `💵 Rent: ${fmtRent(rent)}${rent.source ? ` (as listed on ${rent.source})` : ""}` : "";
+    $("#r-rent").textContent = rent ? `Rent: ${fmtRent(rent)}${rent.source ? ` (as listed on ${rent.source})` : ""}` : "";
     $("#meter").setAttribute("aria-valuenow", quality(d.huff_risk));
 
     renderThemes(d.themes);
@@ -317,7 +325,7 @@
             el("h4", { text: t.theme }),
             el("span", { class: "tone " + t.tone, text: t.tone === "good" ? "Strong" : "Weak" })
           ),
-          t.wolf_comment ? el("p", { class: "wolf-comment", text: `🐺 ${t.wolf_comment}` }) : null,
+          t.wolf_comment ? el("p", { class: "wolf-comment", text: t.wolf_comment }) : null,
           ...t.snippets.map((s) =>
             el("blockquote", { class: "snippet" },
               `"${s.text}"`,
@@ -591,7 +599,7 @@
       ...items.map((it) =>
         el("li", { class: "list-item" },
           el("button", { class: "open", type: "button", onclick: () => { setListOpen(false); inspect(it.data_id); } },
-            el("span", { class: "house-icon", "aria-hidden": "true", text: HOUSE_ICON[it.verdict] || "🏠" }),
+            houseIcon(it.verdict),
             el("span", { class: "info" },
               el("strong", { text: it.title }),
               el("small", { text: it.huff_risk != null ? `${VERDICT_WORD[it.verdict]} · ${quality(it.huff_risk)}/100` : "Not enough data" })
@@ -619,7 +627,8 @@
       return;
     }
     btn.setAttribute("aria-pressed", String(saved));
-    btn.textContent = saved ? "♥ In your list" : "♡ Add to list";
+    // Only swap the label; the heart icon stays (CSS fills it in when saved).
+    btn.querySelector(".btn-list-label").textContent = saved ? "In your list" : "Add to list";
   }
 
   function toggleCurrentInList() {
@@ -643,7 +652,7 @@
     count.classList.remove("bump");
     void count.offsetWidth;
     count.classList.add("bump");
-    toast("Added to My List ♥");
+    toast("Added to My List.");
   }
 
   function setListOpen(open) {
@@ -680,17 +689,17 @@
     $("#compare-list").replaceChildren(
       ...visible.map((r) => {
         if (r.error) {
-          return el("div", { class: "compare-card" }, el("div", { class: "house-icon", text: "❓" }), el("p", { text: r.error }));
+          return el("div", { class: "compare-card" }, el("div", { class: "house-icon", text: "?" }), el("p", { text: r.error }));
         }
         const isSurvivor = r.data_id === survivor;
         const rent = r.place.rent;
         return el("button", { class: "compare-card" + (isSurvivor ? " survivor" : ""), type: "button", onclick: () => inspect(r.data_id) },
-          el("div", { class: "house-icon", text: HOUSE_ICON[r.verdict] || "🏠" }),
+          houseIcon(r.verdict, "div"),
           el("h4", { text: r.place.title }),
           el("div", { class: "risk", text: r.huff_risk != null ? `${quality(r.huff_risk)}/100` : "Not enough data" }),
           el("p", { text: VERDICT_WORD[r.verdict] || "The trail went cold" }),
-          el("p", { class: "rent", text: rent ? `💵 ${fmtRent(rent)}` : "💵 Rent unknown" }),
-          isSurvivor ? el("p", { class: "crown", text: "👑 This house stays standing" }) : null
+          el("p", { class: "rent", text: rent ? fmtRent(rent) : "Rent unknown" }),
+          isSurvivor ? el("p", { class: "crown", text: "This house stays standing" }) : null
         );
       })
     );
@@ -764,8 +773,8 @@
   function popupFor(b) {
     return el("div", { class: "map-popup" },
       el("strong", { text: b.title }),
-      el("p", { class: "verdict", text: `${HOUSE_ICON[b.verdict]} ${VERDICT_WORD[b.verdict]} · ${quality(b.huff_risk)}/100` }),
-      el("p", { class: "rent", text: b.rent ? `💵 ${fmtRent(b.rent)}` : "💵 Rent unknown" }),
+      el("p", { class: "verdict" }, houseIcon(b.verdict), ` ${VERDICT_WORD[b.verdict]} · ${quality(b.huff_risk)}/100`),
+      el("p", { class: "rent", text: b.rent ? fmtRent(b.rent) : "Rent unknown" }),
       el("button", { class: "btn btn-small", type: "button", text: "Read the inspection", onclick: () => inspect(b.data_id) })
     );
   }
@@ -773,7 +782,7 @@
   // Small heart badge for homes on My List (same heart as the list icon).
   const PIN_HEART = `<svg class="pin-heart" viewBox="13.5 21 21 17" aria-hidden="true">
     <path d="M24 37 C 15.5 31, 14.5 26.5, 17 23.8 C 19.6 21, 23 22.4, 24 25.2 C 25 22.4, 28.4 21, 31 23.8 C 33.5 26.5, 32.5 31, 24 37 Z"
-          fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+          fill="var(--heart)" stroke="var(--ink)" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 
   function pinIcon(b, onList) {
     return L.divIcon({
@@ -891,11 +900,43 @@
     }
   }
 
+  // ---------- Meet the Wolf (character select) ----------
+
+  const POSE_ORDER = ["idle", "inhale", "blow"];
+  let poseTimer = null;
+  let currentPose = "idle";
+
+  function selectPose(pose) {
+    currentPose = pose;
+    const img = $("#char-img");
+    img.src = WOLF_IMG[pose];
+    img.classList.remove("swap");
+    void img.offsetWidth; // replay the swap-in
+    img.classList.add("swap");
+  }
+
+  // He strikes a new pose every few seconds while the page is open.
+  function startPoseCycle() {
+    stopPoseCycle();
+    poseTimer = setInterval(() => selectPose(POSE_ORDER[(POSE_ORDER.indexOf(currentPose) + 1) % POSE_ORDER.length]), 2600);
+  }
+  function stopPoseCycle() { clearInterval(poseTimer); poseTimer = null; }
+
+  function openAbout({ push = true } = {}) {
+    if (push) setUrl({ page: "wolf" });
+    document.title = "Meet the Wolf · Big Bad Wolf Inspection Agency";
+    show("about");
+    selectPose("idle");
+    if (!reducedMotion()) startPoseCycle();
+  }
+
   // ---------- routing ----------
 
   function route() {
     const params = new URLSearchParams(location.search);
     clearTimers();
+    stopPoseCycle();
+    if (params.get("page") === "wolf") return openAbout({ push: false });
     if (params.get("id")) return inspect(params.get("id"), { push: false });
     if (params.get("map")) return openMap(null, { push: false });
     if (params.get("compare")) return runCompare(params.get("compare").split(",").filter(Boolean).slice(0, LIST_MAX), { push: false });
@@ -942,6 +983,16 @@
   $("#cmp-rent-filter").addEventListener("submit", (e) => e.preventDefault());
   $("#cmp-rent-clear").addEventListener("click", () => { clearRentForm($("#cmp-rent-filter")); renderCompare(); });
   // Go back to wherever the map was opened from; visitors who arrived on a shared map link go home instead.
+  // The logo is the way home.
+  $("#home-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    setListOpen(false);
+    goHome();
+  });
+  $("#btn-about-home").addEventListener("click", () => openAbout());
+  $("#footer-about").addEventListener("click", (e) => { e.preventDefault(); openAbout(); });
+  $("#about-back").addEventListener("click", () => (history.state && history.state.inApp ? history.back() : goHome()));
+  $("#about-start").addEventListener("click", goHome);
   $("#map-back").addEventListener("click", () => (history.state && history.state.inApp ? history.back() : goHome()));
   window.addEventListener("popstate", route);
   renderList();
